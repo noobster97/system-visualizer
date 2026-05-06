@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Camera, CheckCircle2, ChevronRight, Search, Heart, Star, Copy, Check } from 'lucide-react';
+import { Moon, Sun, Palette, CheckCircle2, ChevronRight, Search, Heart, Star, Copy, Check } from 'lucide-react';
 import { palettes, Palette, PaletteValues } from './palettes';
 
 const headingFonts = [
@@ -72,8 +72,8 @@ export default function App() {
             <h2 className="text-[10px] font-bold uppercase tracking-widest">SaaS Configurator</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Camera className="w-5 h-5 text-purple-500" />
-            <h1 className="text-lg font-semibold tracking-tight" style={{ fontFamily: selectedHeadingFont }}>PhotoSys Visualizer</h1>
+            <Palette className="w-5 h-5 text-purple-500" />
+            <h1 className="text-lg font-semibold tracking-tight" style={{ fontFamily: selectedHeadingFont }}>Design Visualizer</h1>
           </div>
         </div>
 

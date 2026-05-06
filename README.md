@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Design Palette Visualizer
 
-# Run and deploy your AI Studio app
+An interactive tool to preview and explore color palettes with customizable typography for web design projects.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/b0d6754f-2fc1-4791-88ea-29b57c236cba
+- 🎨 Multiple pre-designed color palettes
+- 🔤 Typography engine with custom font selection
+- 🌓 Light and dark mode support
+- 📋 Copy palette configurations as formatted text
+- ⚡ Real-time preview
 
 ## Run Locally
 
 **Prerequisites:**  Node.js
 
-
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+2. Run the app:
+   ```bash
+   npm run dev
+   ```
+3. Open [http://localhost:3000](http://localhost:3000) in your browser

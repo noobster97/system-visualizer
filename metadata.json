@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Design Palette Visualizer",
+  "description": "Interactive tool to preview and explore color palettes with customizable typography for web design projects",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["color-palette-preview", "typography-customization", "light-dark-mode"]
 }

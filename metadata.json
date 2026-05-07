@@ -1,6 +1,6 @@
 {
   "name": "Design Palette Visualizer",
-  "description": "Interactive tool to preview and explore color palettes with customizable typography for web design projects",
+  "description": "AI-assisted tool for generating 10 color palette and font pair options from a focused user design brief",
   "requestFramePermissions": [],
-  "majorCapabilities": ["color-palette-preview", "typography-customization", "light-dark-mode"]
+  "majorCapabilities": ["ai-palette-generation", "font-pair-generation", "controlled-preview", "local-file-history"]
 }

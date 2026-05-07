@@ -1,1 +1,54 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&family=Figtree:wght@400;600;700&family=Fraunces:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;700&family=Lora:wght@400;600;700&family=Manrope:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&family=Outfit:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Public+Sans:wght@400;600;700&family=Sora:wght@400;600;700;800&family=Source+Sans+3:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@500;700;800&family=Unbounded:wght@400;600;700&family=Urbanist:wght@400;600;700;800&family=Work+Sans:wght@400;600;700&display=swap");
 @import "tailwindcss";
+
+:root {
+  color-scheme: dark light;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.65) transparent;
+}
+
+.app-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.72) rgba(24, 24, 27, 0.35);
+}
+
+.app-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.28);
+  border-radius: 999px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.9), rgba(20, 184, 166, 0.72));
+  border: 2px solid rgba(10, 10, 10, 0.8);
+  border-radius: 999px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(167, 139, 250, 1), rgba(45, 212, 191, 0.9));
+}
+
+.pretty-select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 13px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2.5rem;
+}
+
+.pretty-select option {
+  background: #111827;
+  color: #f8fafc;
+}

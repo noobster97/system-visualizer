@@ -521,8 +521,9 @@ ${referenceMode}
 Rules:
 - Read "Input mode" in the user design intent carefully:
   From Screenshot means the attached image is required and must drive previewCanvas layout, component placement, density, and visual hierarchy. Written fields are only context for palette, font, mood, audience, and safe generic labels.
-  From Brief means there is no screenshot driving layout, so the written project type/use case/design style must drive previewCanvas.
+  From Brief means there is no screenshot driving layout, so the written use case, audience, mood, and design style must drive previewCanvas. Do not treat brief mode as a generic landing-page generator.
 - For Screenshot mode, first internally identify the uploaded UI's layout inventory before writing JSON: canvas aspect, header/sidebar/footer positions, hero/media regions, search/filter controls, card/table/form groups, repeated component patterns, empty states, major whitespace, and any intentional overlays. Then convert that inventory into previewCanvas primitives.
+- For Brief mode, first internally infer the product category and primary user workflow from the written use case. Then choose the most realistic interface architecture for that product before writing JSON. The previewCanvas must show the actual kind of screen the user described, not only a decorative hero section.
 - The frontend renders your previewCanvas directly and only clips overflow for safety. It will not redesign the composition, so your coordinates, sizes, labels, and hierarchy are the source of truth.
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
@@ -530,15 +531,17 @@ Rules:
 - previewCopy and components must be specific to the user request. Avoid generic labels like "Feature Cards", "Primary Flow", "First row", "Project Name", "Overview" unless the uploaded image or prompt really calls for them.
 - The selected Project type is context only. If it is "Auto-detect from upload", infer the interface type from the uploaded image when present, otherwise infer it from the written brief. The previewCanvas decides the visible layout. It should be a controlled look-a-like of the uploaded image when one is provided, otherwise a prompt-based mockup using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
 - Treat the preview as a detailed product mockup: use previewCanvas to represent realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
-- Template guidance for NO-UPLOAD requests only. If an uploaded image is provided, do not follow this list as the layout template; follow the uploaded image structure instead:
-  Website: top header, hero, media area, content cards, inquiry/form band, service/proof cards, footer.
-  Web System: operation shell, workspace navigation, metrics, work queue, approval/action form, activity/sidebar panels.
-  Mobile App: mobile shell, top app bar, hero card, list cards, compact form/action controls.
-  Dashboard: sidebar/topbar, KPI cards, chart/list/table area, utility panel.
-  Landing Page: strong header, large hero, CTA, benefit cards, footer.
-  E-commerce: storefront or booking header, product/reservation cards, checkout/reserve action, footer.
-  SaaS Product: workspace shell, feature cards, onboarding/action panel, data/status modules.
-  Portfolio: editorial intro, project grid/case cards, contact/footer area.
+- Brief-mode architecture guidance for NO-UPLOAD requests only. If an uploaded image is provided, do not follow this list as the layout template; follow the uploaded image structure instead. For brief mode, use this as a checklist of important UI areas to include when the written use case implies them:
+  Website: top header, hero, primary content/media, service or proof sections, inquiry/contact area, footer.
+  Web System: app shell, workspace navigation, task/record queue, detail panel, filters/search, action form, status/activity area.
+  Mobile App: device-like mobile viewport, top app bar, primary card/screen, list or feed, form/action controls, bottom tabs when useful.
+  Dashboard: sidebar or topbar, KPI cards, filters, chart/data area, table/list, alerts or utility panel.
+  Landing Page: header, hero, CTA, benefit/proof cards, feature/media band, lead form or pricing strip, footer.
+  E-commerce or Booking: storefront/booking header, search/filter controls, product/reservation cards, availability/checkout/reserve action, trust/footer area.
+  SaaS Product: workspace shell, onboarding/activation panel, feature or module cards, data/status modules, billing/team/settings hints when relevant.
+  Portfolio: editorial intro, project/gallery grid, case study cards, contact panel, footer.
+  Marketplace/Directory: header, search bar, filter chips/sidebar, result cards/list, sort/status, detail or CTA band, footer.
+  Admin/CRM: sidebar/topbar, customer/project list, pipeline/status cards, editable detail panel, notes/activity stream, action buttons.
 - If an uploaded image is provided, use it as the primary reference for what the mockup should represent: infer the screen type, main UI regions, component emphasis, density, spacing rhythm, and likely content categories. Do not display or copy the uploaded image itself.
 - If an uploaded image is provided, previewCanvas must feel like a simplified clone of the uploaded UI structure: same broad layout, same major region placement, similar component density, similar spacing rhythm, and similar visual hierarchy. Apply new palette/font choices to that structure.
 - For screenshot uploads, build previewCanvas from the screenshot like a layout tracing pass: identify the visible canvas bounds, then map each major region to percentage coordinates before adding details. Preserve the relative positions of header, navigation, hero/title, controls, cards/lists/forms, content bands, and footer/bottom sections.
@@ -562,7 +565,7 @@ Rules:
   Do a final viewport-fit check at desktop width: all important text, controls, cards, and bottom sections must be visible inside the 0-100 canvas without accidental clipping, stacking, or horizontal overflow.
   When copying screenshot-like structure, use fewer readable labels and more line/media/box primitives for dense repeated content. Readable text should be reserved for key nav/hero/actions/card names only.
   Coverage checklist for screenshot uploads: represent every major visible region of the uploaded UI, including top navigation, main title/hero, search/filter/toolbars, card/list/table/form area, side panels, footer/bottom area, and obvious repeated component groups. If the screenshot has repeated cards/chips/rows, include enough primitives to show that repetition and spacing rhythm.
-  Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards.
+  Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards. If the user describes a booking system, include search/filter/availability/reservation actions. If they describe an admin/web system, include navigation, work area, table/list/detail/action regions. If they describe marketplace/directory, include search/filter/result cards/detail CTA/footer. If they describe mobile app, use mobile aspect and mobile navigation patterns.
   Do not leave large accidental blank areas unless the uploaded image or requested design clearly has that whitespace. If the original has dense content, the previewCanvas should also look dense.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
   You control text hierarchy with textSize. Use readable standard UI sizes for desktop and large-screen previews, similar to a real web app. Do not overuse xs/sm for important content. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
@@ -611,6 +614,7 @@ Rules:
 - Make the 10 options meaningfully different design directions while still matching the same user intent or uploaded reference.
 - Font pairs must match the project mood and audience. Use display fonts only when appropriate; keep body fonts highly readable.
 - For no-upload requests, the chosen preview structure must look suitable for the requested system type. For upload requests, the uploaded image structure wins and previewStyle should adapt that structure to the user's prompt and generated palette/font direction.
+- For brief-only requests, the preview is still a UI mockup, not a mood board. It must demonstrate how the generated palettes and fonts apply to the real project interface the user described, including the key screen regions and components that would exist in that product.
 - Use visual hierarchy, whitespace, grouped surfaces, realistic button sizes, readable text hierarchy, and a small number of intentional accents.
 - Do not write website copy, code, layouts, marketing plans, implementation instructions, or anything outside this JSON schema.
 - Do not include long marketing copy. previewCopy must use short labels suitable for a UI mockup.

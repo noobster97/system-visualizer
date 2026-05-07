@@ -161,9 +161,13 @@ async function readHistoryFiles(directoryHandle: any): Promise<SavedGeneration[]
 
 function buildBriefPrompt(brief: DesignBrief, inputMode: InputMode, hasUploadedImage: boolean) {
   const modeLabel = inputMode === 'screenshot' ? 'From Screenshot' : 'From Brief';
+  const layoutSource = inputMode === 'screenshot'
+    ? 'Uploaded screenshot is the layout source. Written fields only refine palette, fonts, audience, mood, and safe labels.'
+    : 'Written use case is the layout source. Infer the real product screen architecture from what the user describes.';
   return [
     `Input mode: ${modeLabel}`,
     `Uploaded screenshot provided: ${hasUploadedImage ? 'Yes' : 'No'}`,
+    `Layout source: ${layoutSource}`,
     `Project type: Auto-detect`,
     `Project type rule: ${inputMode === 'screenshot' ? 'Auto-detect the interface type and layout from the uploaded image.' : 'Auto-detect the interface type and layout from the written use case and brief.'}`,
     `Design type: ${brief.designType}`,

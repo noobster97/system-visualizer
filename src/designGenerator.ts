@@ -543,7 +543,7 @@ export async function generateDesignPalettes({ apiKey, provider, model, userInte
   const instruction = `You are the generation engine for Design Palette Visualizer.
 
 The product has exactly one allowed job: generate 10 professional color palette and font-pair options for previewing how a user's system could look.
-The output must make the referenced or described UI feel more beautiful, polished, creative, and professionally usable. Never make the UI look cheaper, noisier, flatter, harder to read, or more chaotic than the uploaded/reference layout.
+The generated RESULT that users see must make their referenced or described UI feel more beautiful, polished, creative, and professionally usable. Never return a palette/font/preview result that makes the user's UI look cheaper, noisier, flatter, harder to read, or more chaotic than the uploaded/reference layout.
 
 User design intent:
 ${safeIntent || 'No written intent provided. Use the uploaded image if present, otherwise create versatile modern SaaS directions.'}
@@ -645,6 +645,8 @@ Rules:
 - Use previewStyle to control visual rhythm, not only labels. Match the reference/prompt with suitable density, margins, section spacing, surface depth, radius, background treatment, and component style. A luxury/editorial design can breathe more; an operations dashboard can be tighter; a mobile app can use compact grouped cards; a futuristic or immersive direction can use stronger bands and contrast.
 - Each option must include one light theme, one dark theme, one heading font, and one body font.
 - Act like a senior product UI designer creating production-ready palette systems, not decorative mood boards.
+- Before returning JSON, judge every palette/font option as if it is already applied to the user's real screen. If an option would make the result preview ugly, overly saturated, low-contrast, childish, noisy, or less professional than the source, replace it with a better option.
+- The result preview must feel like a tasteful visual upgrade of the user's uploaded or described UI. Preserve the broad layout, but improve the apparent design quality through balanced colors, better contrast, stronger hierarchy, calmer surfaces, and appropriate typography.
 - Each palette must feel cohesive, professional, and usable for interface design: balanced neutrals, one clear brand color, readable text, subtle borders, and a useful highlight surface.
 - Avoid random bright combinations, muddy low-contrast sets, one-note palettes, and brand colors that clash with their foreground.
 - Palette application must improve the UI. Use neutrals for page backgrounds, cards, input fields, and large content regions. Use brand color for primary actions, selected states, small badges, key accents, and limited hero/highlight areas.
@@ -802,6 +804,8 @@ Your previous response was incomplete or malformed for this app. Return the same
 - components
 - previewCanvas.items with at least 36 valid items, preferably 70 to 120 for desktop/screenshot/dashboard/marketplace screens
 - include all important UI regions needed for the uploaded screenshot or written brief
+- make the final result preview look like a tasteful professional improvement of the user's UI, not a worse recolor
+- replace any palette/font option that makes the preview look ugly, noisy, low-contrast, or overly saturated
 - do not omit the footer/bottom/content regions when relevant
 - do not put layout details in unsupported fields
 - return only valid JSON`;

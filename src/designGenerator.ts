@@ -218,7 +218,7 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
       };
     })
     .filter((item): item is PreviewItem => Boolean(item))
-    .slice(0, 70);
+    .slice(0, 100);
 }
 
 function normalizeGeneration(raw: unknown): DesignGeneration {
@@ -484,7 +484,7 @@ async function generateWithAnthropic(apiKey: string, model: string, instruction:
     },
     body: JSON.stringify({
       model,
-      max_tokens: 6000,
+      max_tokens: 9000,
       messages: [{ role: 'user', content }],
     }),
   });
@@ -522,7 +522,7 @@ Rules:
 - Read "Input mode" in the user design intent carefully:
   From Screenshot means the attached image is required and must drive previewCanvas layout, component placement, density, and visual hierarchy. Written fields are only context for palette, font, mood, audience, and safe generic labels.
   From Brief means there is no screenshot driving layout, so the written project type/use case/design style must drive previewCanvas.
-- For Screenshot mode, first internally identify the uploaded UI's layout inventory before writing JSON: canvas aspect, header/sidebar/footer positions, hero/media regions, card/table/form groups, repeated component patterns, major whitespace, and any intentional overlays. Then convert that inventory into previewCanvas primitives.
+- For Screenshot mode, first internally identify the uploaded UI's layout inventory before writing JSON: canvas aspect, header/sidebar/footer positions, hero/media regions, search/filter controls, card/table/form groups, repeated component patterns, empty states, major whitespace, and any intentional overlays. Then convert that inventory into previewCanvas primitives.
 - The frontend will not repair, reposition, de-overlap, or redesign your previewCanvas. It renders your coordinates as the source of truth. You must do the layout QA yourself before returning JSON.
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
@@ -544,7 +544,7 @@ Rules:
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and detected or selected Project type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be complete enough to stand alone, because the app should not invent the layout after your response. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
-  items: 24 to 70 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the page structure without copying exact text or logos. Prefer 36 to 60 items for detailed desktop/dashboard mockups and 24 to 42 items for mobile/simple screens. Each item uses:
+  items: 36 to 100 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the real page structure without copying exact text or logos. Prefer 60 to 90 items for detailed desktop/dashboard/screenshot mockups, 45 to 70 items for landing/marketplace/screens with repeated cards, and 30 to 55 items for mobile/simple screens. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider
     x, y, w, h: numbers from 0 to 100 as percentages inside the whole canvas
     tone: brand, surface, muted, contrast, text
@@ -557,6 +557,9 @@ Rules:
     blur: optional boolean for soft decorative/media wash only
 - previewCanvas quality rules:
   Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
+  Coverage checklist for screenshot uploads: represent every major visible region of the uploaded UI, including top navigation, main title/hero, search/filter/toolbars, card/list/table/form area, side panels, footer/bottom area, and obvious repeated component groups. If the screenshot has repeated cards/chips/rows, include enough primitives to show that repetition and spacing rhythm.
+  Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards.
+  Do not leave large accidental blank areas unless the uploaded image or requested design clearly has that whitespace. If the original has dense content, the previewCanvas should also look dense.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
   You control text hierarchy with textSize. Do not rely on the frontend to shrink oversized text. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
@@ -621,6 +624,7 @@ Rules:
 - Do not always choose the same block spans or tones. If the upload has a strong top bar, use header/full/surface or brand. If it has image/product sections, use hero/media or cards/media. If it has data, use cards/metric and table/list.
 - Do not always use the same previewStyle. Match the uploaded/prompt layout rhythm: centered hero, split media, metrics dashboard, image-first gallery, form-led app, editorial text, or sectioned product page.
 - Do not always use the same previewCanvas. Different uploads/prompts must produce visibly different item positions and composition.
+- Do not return sparse placeholder mockups. The previewCanvas must look like a real UI screen using the generated palette and fonts, with enough detail for the user to judge whether the palette/font direction fits their actual project.
 - Do not apply the brand color to every component. Choose a realistic mix of brand areas, neutral surfaces, soft bands, and contrast accents.
 - Use only valid 6-digit hex colors.
 - Keep light themes readable on light backgrounds and dark themes readable on dark backgrounds.

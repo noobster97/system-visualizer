@@ -51,6 +51,7 @@ export type PreviewItem = {
   tone: 'brand' | 'surface' | 'muted' | 'contrast' | 'text';
   radius?: 'none' | 'soft' | 'round';
   label?: string;
+  textSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   emphasis?: 'low' | 'normal' | 'high';
   shadow?: 'none' | 'soft' | 'strong';
   opacity?: number;

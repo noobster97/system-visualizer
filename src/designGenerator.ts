@@ -59,6 +59,7 @@ const allowedBlockValues = {
   itemKind: ['box', 'line', 'heading', 'text', 'media', 'button', 'avatar', 'divider'],
   itemTone: ['brand', 'surface', 'muted', 'contrast', 'text'],
   itemRadius: ['none', 'soft', 'round'],
+  itemTextSize: ['xs', 'sm', 'md', 'lg', 'xl'],
   itemEmphasis: ['low', 'normal', 'high'],
   itemShadow: ['none', 'soft', 'strong'],
   canvasAspect: ['desktop', 'mobile', 'square'],
@@ -209,6 +210,7 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
         tone: allowedBlockValues.itemTone.includes(source.tone as PreviewItem['tone']) ? source.tone as PreviewItem['tone'] : 'muted',
         radius: allowedBlockValues.itemRadius.includes(source.radius as NonNullable<PreviewItem['radius']>) ? source.radius as PreviewItem['radius'] : 'soft',
         label: typeof source.label === 'string' ? source.label.trim().slice(0, 48) : undefined,
+        textSize: allowedBlockValues.itemTextSize.includes(source.textSize as NonNullable<PreviewItem['textSize']>) ? source.textSize as PreviewItem['textSize'] : undefined,
         emphasis: allowedBlockValues.itemEmphasis.includes(source.emphasis as NonNullable<PreviewItem['emphasis']>) ? source.emphasis as PreviewItem['emphasis'] : 'normal',
         shadow: allowedBlockValues.itemShadow.includes(source.shadow as NonNullable<PreviewItem['shadow']>) ? source.shadow as PreviewItem['shadow'] : 'none',
         opacity: typeof source.opacity === 'number' ? Math.max(0.08, Math.min(1, source.opacity)) : undefined,
@@ -548,6 +550,7 @@ Rules:
     tone: brand, surface, muted, contrast, text
     radius: none, soft, round
     label: optional short generic text for heading, text, button, or avatar items. Do not copy exact uploaded wording, names, private data, or logos.
+    textSize: optional xs, sm, md, lg, xl. Use this to control text hierarchy from the uploaded UI or prompt. Large hero text can be lg/xl only when its box has enough room; compact card/table text should usually be xs/sm/md.
     emphasis: low, normal, high
     shadow: none, soft, strong
     opacity: optional number from 0.08 to 1
@@ -555,6 +558,7 @@ Rules:
 - previewCanvas quality rules:
   Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
+  You control text hierarchy with textSize. Do not rely on the frontend to shrink oversized text. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
   If the uploaded UI has overlays, represent them intentionally with enough contrast and room; do not accidentally stack unrelated labels, buttons, cards, or form fields.
@@ -577,6 +581,7 @@ Rules:
     tone: brand, surface, muted, contrast, text
     radius: none, soft, round
     label: optional short generic text for heading, text, button, or avatar items. Do not copy exact uploaded wording, names, private data, or logos.
+    textSize: optional xs, sm, md, lg, xl
 - Return previewStyle using only these values:
   layoutPattern: landing, dashboard, mobile, editorial, marketplace
   navigationStyle: top, sidebar, tabs
@@ -649,9 +654,9 @@ Return only valid JSON in this exact shape:
     "aspect": "desktop",
     "items": [
       { "kind": "box", "x": 0, "y": 0, "w": 100, "h": 100, "tone": "surface", "radius": "none" },
-      { "kind": "heading", "x": 8, "y": 12, "w": 38, "h": 8, "tone": "text", "radius": "none", "label": "Generic heading" },
+      { "kind": "heading", "x": 8, "y": 12, "w": 38, "h": 8, "tone": "text", "radius": "none", "label": "Generic heading", "textSize": "lg" },
       { "kind": "media", "x": 56, "y": 12, "w": 34, "h": 38, "tone": "muted", "radius": "soft" },
-      { "kind": "button", "x": 8, "y": 34, "w": 16, "h": 7, "tone": "brand", "radius": "soft", "label": "Action" },
+      { "kind": "button", "x": 8, "y": 34, "w": 16, "h": 7, "tone": "brand", "radius": "soft", "label": "Action", "textSize": "sm" },
       { "kind": "box", "x": 8, "y": 56, "w": 24, "h": 20, "tone": "muted", "radius": "soft" },
       { "kind": "box", "x": 38, "y": 56, "w": 24, "h": 20, "tone": "surface", "radius": "soft" },
       { "kind": "box", "x": 68, "y": 56, "w": 24, "h": 20, "tone": "surface", "radius": "soft" }
@@ -667,9 +672,9 @@ Return only valid JSON in this exact shape:
       "height": "short",
       "items": [
         { "kind": "avatar", "x": 3, "y": 28, "w": 5, "h": 38, "tone": "brand", "radius": "soft", "label": "A" },
-        { "kind": "heading", "x": 10, "y": 26, "w": 24, "h": 18, "tone": "text", "radius": "none", "label": "Project Label" },
-        { "kind": "text", "x": 10, "y": 52, "w": 18, "h": 12, "tone": "muted", "radius": "none", "label": "Short context" },
-        { "kind": "button", "x": 76, "y": 28, "w": 18, "h": 38, "tone": "brand", "radius": "soft", "label": "Action" }
+        { "kind": "heading", "x": 10, "y": 26, "w": 24, "h": 18, "tone": "text", "radius": "none", "label": "Project Label", "textSize": "md" },
+        { "kind": "text", "x": 10, "y": 52, "w": 18, "h": 12, "tone": "muted", "radius": "none", "label": "Short context", "textSize": "sm" },
+        { "kind": "button", "x": 76, "y": 28, "w": 18, "h": 38, "tone": "brand", "radius": "soft", "label": "Action", "textSize": "sm" }
       ]
     }
   ],

@@ -1332,17 +1332,18 @@ function clampCanvasRect(item: PreviewItem) {
   };
 }
 
-function getCanvasTextSize(rect: ReturnType<typeof clampCanvasRect>, kind: 'heading' | 'text' | 'button' | 'label', requested?: PreviewItem['textSize']) {
+function getCanvasTextSize(rect: ReturnType<typeof clampCanvasRect>, kind: 'heading' | 'text' | 'button' | 'label', requested: PreviewItem['textSize'] | undefined, aspect: PreviewCanvas['aspect']) {
   const sizeKey = requested || 'md';
   const sizeMap = {
-    heading: { xs: 14, sm: 18, md: 24, lg: 32, xl: 40 },
-    text: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
-    button: { xs: 10, sm: 11, md: 12.5, lg: 14, xl: 16 },
-    label: { xs: 10, sm: 11, md: 12, lg: 14, xl: 16 },
+    heading: { xs: 16, sm: 20, md: 28, lg: 36, xl: 48 },
+    text: { xs: 11, sm: 13, md: 15, lg: 17, xl: 20 },
+    button: { xs: 12, sm: 13, md: 14, lg: 15, xl: 16 },
+    label: { xs: 12, sm: 13, md: 14, lg: 15, xl: 16 },
   } as const;
-  const preferred = sizeMap[kind][sizeKey];
+  const aspectScale = aspect === 'mobile' ? 0.86 : 1;
+  const preferred = sizeMap[kind][sizeKey] * aspectScale;
   const cramped = rect.w < (kind === 'heading' ? 10 : 7) || rect.h < (kind === 'heading' ? 4 : 2.4);
-  return cramped ? Math.max(9, preferred * 0.82) : preferred;
+  return cramped ? Math.max(10, preferred * 0.88) : preferred;
 }
 
 function previewItemLayer(item: PreviewItem) {
@@ -1470,7 +1471,7 @@ function FreeformPreview({
           };
 
           if (item.kind === 'heading' || item.kind === 'text') {
-            const textSize = getCanvasTextSize(rect, item.kind, item.textSize);
+            const textSize = getCanvasTextSize(rect, item.kind, item.textSize, previewCanvas.aspect);
             const lineCount = rect.h >= (item.kind === 'heading' ? 9 : 6) && rect.w >= 12 ? 2 : 1;
 
             return (
@@ -1501,7 +1502,7 @@ function FreeformPreview({
 
           if (item.kind === 'button') {
             const canShowButtonLabel = rect.w >= 7 && rect.h >= 3;
-            const buttonTextSize = getCanvasTextSize(rect, 'button', item.textSize);
+            const buttonTextSize = getCanvasTextSize(rect, 'button', item.textSize, previewCanvas.aspect);
             return (
               <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center font-bold leading-none" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText, fontSize: buttonTextSize }}>
                 {canShowButtonLabel ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
@@ -1526,7 +1527,7 @@ function FreeformPreview({
           return (
             <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
               {item.label && rect.h > 4 && rect.w > 10 && (
-                <span className="absolute left-2 top-1.5 max-w-[85%] truncate font-bold sm:left-3 sm:top-2" style={{ color: item.tone === 'brand' ? brandText : displayText, fontSize: getCanvasTextSize(rect, 'label', item.textSize) }}>{item.label}</span>
+                <span className="absolute left-2 top-1.5 max-w-[85%] truncate font-bold sm:left-3 sm:top-2" style={{ color: item.tone === 'brand' ? brandText : displayText, fontSize: getCanvasTextSize(rect, 'label', item.textSize, previewCanvas.aspect) }}>{item.label}</span>
               )}
             </div>
           );

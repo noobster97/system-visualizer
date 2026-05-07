@@ -550,7 +550,7 @@ Rules:
     tone: brand, surface, muted, contrast, text
     radius: none, soft, round
     label: optional short generic text for heading, text, button, or avatar items. Do not copy exact uploaded wording, names, private data, or logos.
-    textSize: optional xs, sm, md, lg, xl. Use this to control text hierarchy from the uploaded UI or prompt. Desktop previews should not make important headings, buttons, and card labels tiny. If a section needs to feel compact, scale the related blocks, controls, and labels together instead of shrinking only the text.
+    textSize: optional xs, sm, md, lg, xl. Use this to control text hierarchy from the uploaded UI or prompt. Desktop previews should use normal production interface sizes: md for regular section headings/body labels, lg/xl only for true hero or page-title text, xs/sm only for metadata, table rows, helper labels, and dense secondary details. If a section needs to feel compact, scale the related blocks, controls, and labels together instead of shrinking only the text.
     emphasis: low, normal, high
     shadow: none, soft, strong
     opacity: optional number from 0.08 to 1
@@ -561,7 +561,7 @@ Rules:
   Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards.
   Do not leave large accidental blank areas unless the uploaded image or requested design clearly has that whitespace. If the original has dense content, the previewCanvas should also look dense.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
-  You control text hierarchy with textSize. Use readable default sizes for desktop and large-screen previews. Do not overuse xs/sm for important content. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
+  You control text hierarchy with textSize. Use readable standard UI sizes for desktop and large-screen previews, similar to a real web app. Do not overuse xs/sm for important content. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
   If the uploaded UI has overlays, represent them intentionally with enough contrast and room; do not accidentally stack unrelated labels, buttons, cards, or form fields.

@@ -240,7 +240,7 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
       };
     })
     .filter((item): item is PreviewItem => Boolean(item))
-    .slice(0, 140);
+    .slice(0, 100);
 }
 
 function normalizeGeneration(raw: unknown): DesignGeneration {
@@ -397,12 +397,6 @@ function getOutputText(payload: any) {
   return outputText || '';
 }
 
-function shouldRetryGeneration(error: unknown) {
-  if (getErrorStatus(error)) return false;
-  const message = error instanceof Error ? error.message : String(error || '');
-  return /incomplete preview|invalid result|JSON|Unexpected token|Unexpected end/i.test(message);
-}
-
 function normalizeModelList(provider: AiProvider, names: string[]) {
   const unique = Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)));
   const filtered = unique.filter((name) => {
@@ -464,7 +458,7 @@ async function generateWithGemini(apiKey: string, model: string, instruction: st
     contents: [{ role: 'user', parts }],
     config: {
       responseMimeType: 'application/json',
-      temperature: 0.85,
+      temperature: 0.65,
     },
   });
 
@@ -516,7 +510,7 @@ async function generateWithAnthropic(apiKey: string, model: string, instruction:
     },
     body: JSON.stringify({
       model,
-      max_tokens: 9000,
+      max_tokens: 7000,
       messages: [{ role: 'user', content }],
     }),
   });
@@ -562,7 +556,7 @@ Rules:
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
 - previewCopy and components must be specific to the user request. Avoid generic labels like "Feature Cards", "Primary Flow", "First row", "Project Name", "Overview" unless the uploaded image or prompt really calls for them.
-- Return all required details in one complete JSON object: exactly 10 palettes, previewStyle, previewCopy, components, and a detailed previewCanvas. The app does not call you again to fill missing preview details.
+- Return all required details in one complete JSON object: exactly 10 palettes, previewStyle, previewCopy, components, and a detailed previewCanvas. The app does not call you again to fill missing preview details, so the first response must be complete.
 - Only fields listed in the JSON schema below will be displayed. Do not invent extra fields for layout details, because the app will ignore them.
 - The selected Project type is context only. If it is "Auto-detect from upload", infer the interface type from the uploaded image when present, otherwise infer it from the written brief. The previewCanvas decides the visible layout. It should be a controlled look-a-like of the uploaded image when one is provided, otherwise a prompt-based mockup using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
 - Treat the preview as a detailed product mockup: use previewCanvas to represent realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
@@ -583,7 +577,7 @@ Rules:
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and detected or selected Project type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be complete enough to stand alone, because the app should not invent the layout after your response. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
-  items: 36 to 140 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the real page structure without copying exact text or logos. Prefer 70 to 120 items for detailed desktop/dashboard/screenshot mockups, 55 to 90 items for landing/marketplace/screens with repeated cards, and 32 to 60 items for mobile/simple screens. Each item uses:
+  items: 36 to 100 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the real page structure without copying exact text or logos. Prefer 58 to 90 items for detailed desktop/dashboard/screenshot mockups, 46 to 76 items for landing/marketplace/screens with repeated cards, and 32 to 54 items for mobile/simple screens. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider
     x, y, w, h: numbers from 0 to 100 as percentages inside the whole canvas
     tone: brand, surface, muted, contrast, text
@@ -616,20 +610,7 @@ Rules:
   If many controls/cards must fit, reduce the entire group proportionally with consistent gutters; do not leave full-size blocks with unreadably small labels.
   Preserve visual breathing room around edges, keep footer or bottom navigation visible when relevant, and avoid placing important text directly over busy media.
   If you cannot confidently represent detailed text without collisions, use non-readable line primitives inside cards instead of heading/text labels.
-- Return previewBlocks as optional category metadata for template hints. Prefer 4 to 6 blocks when the system type naturally has multiple sections. previewBlocks are not used to fully arrange the preview. Use only:
-  component: header, hero, cards, form, table, footer
-  span: full, wide, half, third
-  tone: brand, surface, muted, contrast
-  variant: standard, media, metric, form, list, feature
-  arrangement: bar, split, grid, list, stack, media, form
-  height: short, medium, tall
-  items: 2 to 12 positioned primitive shapes per block. Each item uses:
-    kind: box, line, heading, text, media, button, avatar, divider
-    x, y, w, h: numbers from 0 to 100 as percentages inside the block
-    tone: brand, surface, muted, contrast, text
-    radius: none, soft, round
-    label: optional short generic text for heading, text, button, or avatar items. Do not copy exact uploaded wording, names, private data, or logos.
-    textSize: optional xs, sm, md, lg, xl
+- Return previewBlocks as an empty array. The app renders previewCanvas directly, so do not spend tokens duplicating layout details in previewBlocks.
 - Return previewStyle using only these values:
   layoutPattern: landing, dashboard, mobile, editorial, marketplace
   navigationStyle: top, sidebar, tabs
@@ -719,22 +700,7 @@ Return only valid JSON in this exact shape:
       { "kind": "box", "x": 68, "y": 56, "w": 24, "h": 20, "tone": "surface", "radius": "soft" }
     ]
   },
-  "previewBlocks": [
-    {
-      "component": "header",
-      "span": "full",
-      "tone": "surface",
-      "variant": "standard",
-      "arrangement": "bar",
-      "height": "short",
-      "items": [
-        { "kind": "avatar", "x": 3, "y": 28, "w": 5, "h": 38, "tone": "brand", "radius": "soft", "label": "A" },
-        { "kind": "heading", "x": 10, "y": 26, "w": 24, "h": 18, "tone": "text", "radius": "none", "label": "Project Label", "textSize": "md" },
-        { "kind": "text", "x": 10, "y": 52, "w": 18, "h": 12, "tone": "muted", "radius": "none", "label": "Short context", "textSize": "sm" },
-        { "kind": "button", "x": 76, "y": 28, "w": 18, "h": 38, "tone": "brand", "radius": "soft", "label": "Action", "textSize": "sm" }
-      ]
-    }
-  ],
+  "previewBlocks": [],
   "previewStyle": {
     "layoutPattern": "landing",
     "navigationStyle": "top",
@@ -789,29 +755,7 @@ Return only valid JSON in this exact shape:
   };
 
   try {
-    try {
-      return await requestGeneration(instruction);
-    } catch (firstError) {
-      if (!shouldRetryGeneration(firstError)) throw firstError;
-
-      const repairInstruction = `${instruction}
-
-QUALITY REPAIR REQUIRED:
-Your previous response was incomplete or malformed for this app. Return the same JSON shape again, but this time it must be complete and directly renderable:
-- exactly 10 palettes
-- previewCopy with project-specific UI labels
-- previewStyle
-- components
-- previewCanvas.items with at least 36 valid items, preferably 70 to 120 for desktop/screenshot/dashboard/marketplace screens
-- include all important UI regions needed for the uploaded screenshot or written brief
-- make the final result preview look like a tasteful professional improvement of the user's UI, not a worse recolor
-- replace any palette/font option that makes the preview look ugly, noisy, low-contrast, or overly saturated
-- do not omit the footer/bottom/content regions when relevant
-- do not put layout details in unsupported fields
-- return only valid JSON`;
-
-      return await requestGeneration(repairInstruction);
-    }
+    return await requestGeneration(instruction);
   } catch (error) {
     if (getErrorStatus(error) === 503) {
       throw new Error(`${providerDefaults[provider].label} is currently busy. Please wait a moment, then try Generate again.`);

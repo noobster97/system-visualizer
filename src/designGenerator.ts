@@ -571,6 +571,7 @@ Rules:
   heroTreatment: minimal, centered, split-media, banner, editorial
   backgroundTreatment: plain, soft-band, brand-wash, sectioned
   componentTreatment: clean, metric-heavy, image-first, form-led, content-led
+- Use previewStyle to control visual rhythm, not only labels. Match the reference/prompt with suitable density, margins, section spacing, surface depth, radius, background treatment, and component style. A luxury/editorial design can breathe more; an operations dashboard can be tighter; a mobile app can use compact grouped cards; a futuristic or immersive direction can use stronger bands and contrast.
 - Each option must include one light theme, one dark theme, one heading font, and one body font.
 - Act like a senior product UI designer creating production-ready palette systems, not decorative mood boards.
 - Each palette must feel cohesive, professional, and usable for interface design: balanced neutrals, one clear brand color, readable text, subtle borders, and a useful highlight surface.
@@ -592,6 +593,7 @@ Rules:
   Mobile booking screenshot: components ["App Bar", "Dining Hero", "Reservation Cards", "Guest Form", "Bottom Tabs"], formFields like ["Guest Name", "Party Size", "Occasion"].
   Portfolio screenshot: components ["Editorial Intro", "Project Gallery", "Case Study Cards", "Contact Panel"], cardTitles like ["Selected Work", "Brand Story", "Inquiry"].
 - Make previewStyle and components feel specific to the prompt or uploaded image. Do not return a generic SaaS/landing-page direction unless the prompt or image actually asks for it.
+- Do not make every option feel like the same layout with different colors. The app's preview renderer will respect your previewCanvas positions and previewStyle rhythm, so vary spacing, margins, section proportions, visual depth, and accent placement when the uploaded reference or prompt calls for it.
 - Choose component names that match the detected or requested interface. For example dashboard screenshots can include KPI Cards, Analytics Chart, Activity Table, Filter Bar; landing pages can include Top Navigation, Hero CTA, Benefit Cards, Lead Form, Footer Links; restaurant booking can include Dining Hero, Reservation Cards, Booking Form, Guest Details, Footer.
 - Do not always choose the same block spans or tones. If the upload has a strong top bar, use header/full/surface or brand. If it has image/product sections, use hero/media or cards/media. If it has data, use cards/metric and table/list.
 - Do not always use the same previewStyle. Match the uploaded/prompt layout rhythm: centered hero, split media, metrics dashboard, image-first gallery, form-led app, editorial text, or sectioned product page.

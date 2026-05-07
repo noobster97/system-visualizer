@@ -1352,6 +1352,30 @@ function previewItemLayer(item: PreviewItem) {
   return 1;
 }
 
+function getPreviewRhythm(previewStyle: PreviewStyle, aspect: PreviewCanvas['aspect']) {
+  const compactness = previewStyle.density === 'compact' ? 0.72 : previewStyle.density === 'spacious' ? 1.28 : 1;
+  const isMobile = aspect === 'mobile';
+  const isEditorial = previewStyle.layoutPattern === 'editorial' || previewStyle.heroTreatment === 'editorial';
+  const isOperational = previewStyle.layoutPattern === 'dashboard' || previewStyle.navigationStyle === 'sidebar';
+  const basePadding = isMobile ? 10 : isOperational ? 14 : isEditorial ? 22 : 16;
+  const edgeMargin = Math.round(basePadding * compactness);
+  const frameRadius = previewStyle.cornerStyle === 'sharp' ? 8 : previewStyle.cornerStyle === 'rounded' ? 30 : 18;
+  const itemScale = previewStyle.componentTreatment === 'metric-heavy' || isOperational ? 0.9 : previewStyle.componentTreatment === 'image-first' ? 1.08 : 1;
+  const borderWidth = previewStyle.cardStyle === 'bordered' || previewStyle.colorApplication === 'contrast' ? 1 : 0;
+
+  return {
+    edgeMargin,
+    frameRadius,
+    itemScale,
+    borderWidth,
+    frameShadow: previewStyle.cardStyle === 'elevated'
+      ? '0 34px 90px rgba(0,0,0,0.24)'
+      : previewStyle.cardStyle === 'image-led'
+        ? '0 24px 70px rgba(0,0,0,0.18)'
+        : '0 14px 44px rgba(15,23,42,0.1)',
+  };
+}
+
 function FreeformPreview({
   colors,
   font,
@@ -1376,7 +1400,8 @@ function FreeformPreview({
   const displayBorder = darkMode ? mixColor(colors.border, '#FFFFFF', 0.12) : colors.border;
   const calmBrand = darkMode ? mixColor(colors.brand, displayBg, 0.28) : mixColor(colors.brand, displaySurface, 0.1);
   const brandText = readableColor(calmBrand, colors.brandForeground);
-  const radius = previewStyle.cornerStyle === 'sharp' ? 6 : previewStyle.cornerStyle === 'rounded' ? 22 : 14;
+  const rhythm = getPreviewRhythm(previewStyle, previewCanvas.aspect);
+  const radius = rhythm.frameRadius;
   const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[430px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[760px]' : 'aspect-[16/10] max-w-6xl';
   const activeCategories = new Set(components.map(getComponentCategory));
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
@@ -1391,15 +1416,45 @@ function FreeformPreview({
     .sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
 
   return (
-    <div className="min-h-full p-3 sm:p-5" style={{ background: displayBg, color: displayText }}>
-      <div className={`relative mx-auto w-full overflow-hidden shadow-2xl ${aspectClass}`} style={{ backgroundColor: displayBg, border: `1px solid ${displayBorder}`, borderRadius: radius + 8 }}>
-        <div className="absolute inset-0" style={{ background: previewStyle.backgroundTreatment === 'brand-wash' ? `linear-gradient(135deg, ${mixColor(displayBg, colors.brand, 0.18)}, ${displayBg} 48%, ${mixColor(displaySurface, colors.brand, 0.08)})` : displayBg }} />
+    <div
+      className="min-h-full"
+      style={{
+        background: previewStyle.backgroundTreatment === 'sectioned'
+          ? `linear-gradient(180deg, ${displayBg}, ${mixColor(displayBg, displaySurface, 0.42)} 48%, ${displayBg})`
+          : displayBg,
+        color: displayText,
+        padding: `clamp(10px, ${rhythm.edgeMargin / 7}vw, ${rhythm.edgeMargin + 12}px)`,
+      }}
+    >
+      <div
+        className={`relative mx-auto w-full overflow-hidden ${aspectClass}`}
+        style={{
+          backgroundColor: displayBg,
+          border: rhythm.borderWidth ? `${rhythm.borderWidth}px solid ${displayBorder}` : undefined,
+          borderRadius: radius,
+          boxShadow: rhythm.frameShadow,
+        }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background: previewStyle.backgroundTreatment === 'brand-wash'
+              ? `linear-gradient(135deg, ${mixColor(displayBg, colors.brand, previewStyle.colorApplication === 'immersive' ? 0.34 : 0.18)}, ${displayBg} 46%, ${mixColor(displaySurface, colors.brand, 0.1)})`
+              : previewStyle.backgroundTreatment === 'soft-band'
+                ? `linear-gradient(180deg, ${mixColor(displayBg, displaySurface, 0.35)}, ${displayBg} 44%, ${mixColor(displaySurface, displayBg, 0.18)})`
+                : displayBg,
+          }}
+        />
         {visibleItems.map((item, index) => {
           const rect = clampCanvasRect(item);
           const itemColor = getItemColor(item, colors, display);
-          const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : radius;
+          const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : Math.max(4, radius * rhythm.itemScale * (item.kind === 'button' ? 0.72 : 0.56));
           const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);
-          const shadow = item.shadow === 'strong' ? '0 22px 60px rgba(0,0,0,0.24)' : item.shadow === 'soft' ? '0 14px 34px rgba(0,0,0,0.14)' : 'none';
+          const shadow = item.shadow === 'strong'
+            ? `0 ${Math.round(24 * rhythm.itemScale)}px ${Math.round(62 * rhythm.itemScale)}px rgba(0,0,0,${darkMode ? 0.34 : 0.2})`
+            : item.shadow === 'soft'
+              ? `0 ${Math.round(14 * rhythm.itemScale)}px ${Math.round(34 * rhythm.itemScale)}px rgba(0,0,0,${darkMode ? 0.24 : 0.12})`
+              : 'none';
           const layer = previewItemLayer(item);
           const commonStyle: React.CSSProperties = {
             left: `${rect.x}%`,

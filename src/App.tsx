@@ -968,7 +968,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1 w-full max-w-6xl mx-auto flex flex-col overflow-hidden relative z-[1] min-h-0">
+        <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col overflow-hidden relative z-[1] min-h-0">
           {hasGenerated ? (
             <PaletteShowcase
               palettes={palettes}
@@ -1402,7 +1402,7 @@ function FreeformPreview({
   const brandText = readableColor(calmBrand, colors.brandForeground);
   const rhythm = getPreviewRhythm(previewStyle, previewCanvas.aspect);
   const radius = rhythm.frameRadius;
-  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[430px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[760px]' : 'aspect-[16/10] max-w-6xl';
+  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[380px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[640px]' : 'aspect-[16/10] max-w-5xl';
   const activeCategories = new Set(components.map(getComponentCategory));
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = previewCanvas.items
@@ -1423,7 +1423,7 @@ function FreeformPreview({
           ? `linear-gradient(180deg, ${displayBg}, ${mixColor(displayBg, displaySurface, 0.42)} 48%, ${displayBg})`
           : displayBg,
         color: displayText,
-        padding: `clamp(10px, ${rhythm.edgeMargin / 7}vw, ${rhythm.edgeMargin + 12}px)`,
+        padding: `clamp(8px, ${rhythm.edgeMargin / 9}vw, ${rhythm.edgeMargin + 6}px)`,
       }}
     >
       <div
@@ -1686,7 +1686,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </div>
         </div>
       ) : templateType === 'dashboard' ? (
-        <div className="mx-auto grid max-w-6xl gap-4 xl:grid-cols-[240px_1fr]" style={{ color: displayText }}>
+        <div className="mx-auto grid max-w-5xl gap-4 xl:grid-cols-[220px_1fr]" style={{ color: displayText }}>
           {show('header') && <aside className="hidden p-4 xl:block" style={brandStyle}>
             <div className="mb-8 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
@@ -1771,7 +1771,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </main>
         </div>
       ) : templateType === 'system' ? (
-        <div className="mx-auto grid max-w-6xl gap-4 xl:grid-cols-[220px_1fr_280px]" style={{ color: displayText }}>
+        <div className="mx-auto grid max-w-5xl gap-4 xl:grid-cols-[200px_1fr_250px]" style={{ color: displayText }}>
           {show('header') && <aside className="hidden p-4 xl:block" style={panelStyle}>
             <div className="mb-6 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl text-sm font-black" style={{ backgroundColor: calmBrand, color: brandText }}>{content.initial}</div>
@@ -1860,7 +1860,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </aside>}
         </div>
       ) : templateType === 'saas' ? (
-        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl text-sm font-black" style={{ backgroundColor: calmBrand, color: brandText }}>{content.initial}</div>
@@ -1955,7 +1955,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'commerce' ? (
-        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <strong style={{ fontFamily: font }}>{content.brandName}</strong>
             <nav className="flex gap-3 text-xs font-semibold" style={{ color: displayMuted }}>
@@ -2010,7 +2010,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'portfolio' ? (
-        <div className="mx-auto max-w-6xl" style={{ color: displayText }}>
+        <div className="mx-auto max-w-5xl" style={{ color: displayText }}>
           <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             {show('hero') && <div className="p-6 sm:p-8" style={panelStyle}>
               <p className="text-xs font-bold uppercase tracking-widest" style={{ color: colors.brand }}>{content.designType}</p>
@@ -2048,8 +2048,8 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'landing' ? (
-        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
-          {show('hero') && <section className="min-h-[520px] p-6 sm:p-10" style={brandStyle}>
+        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
+          {show('hero') && <section className="min-h-[440px] p-5 sm:p-8" style={brandStyle}>
             {show('header') && <header className="mb-16 flex items-center justify-between">
               <strong style={{ fontFamily: font }}>{content.brandName}</strong>
               <nav className="hidden gap-6 text-xs font-bold opacity-75 sm:flex">
@@ -2096,7 +2096,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : (
-        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl" style={{ backgroundColor: calmBrand }} />

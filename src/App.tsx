@@ -1358,6 +1358,60 @@ function previewItemLayer(item: PreviewItem) {
   return 1;
 }
 
+type PreparedPreviewItem = {
+  item: PreviewItem;
+  rect: ReturnType<typeof clampCanvasRect>;
+  readable: boolean;
+};
+
+function isReadableCanvasItem(item: PreviewItem) {
+  return item.kind === 'heading' || item.kind === 'text' || item.kind === 'button' || Boolean(item.label);
+}
+
+function getReadablePriority(item: PreviewItem) {
+  if (item.kind === 'heading') return 4;
+  if (item.kind === 'button') return 3;
+  if (item.kind === 'text') return 2;
+  return item.label ? 1 : 0;
+}
+
+function getOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<typeof clampCanvasRect>) {
+  const x = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+  const y = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  const overlapArea = x * y;
+  if (!overlapArea) return 0;
+  const smallerArea = Math.max(0.01, Math.min(a.w * a.h, b.w * b.h));
+  return overlapArea / smallerArea;
+}
+
+function preparePreviewItems(items: PreviewItem[]) {
+  const structural = [...items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
+  const acceptedReadable: PreparedPreviewItem[] = [];
+
+  return structural.flatMap((item): PreparedPreviewItem[] => {
+    const rect = clampCanvasRect(item);
+    const readable = isReadableCanvasItem(item);
+    if (!readable) return [{ item, rect, readable }];
+
+    const priority = getReadablePriority(item);
+    const collision = acceptedReadable.some((accepted) => {
+      const acceptedPriority = getReadablePriority(accepted.item);
+      return priority <= acceptedPriority && getOverlapRatio(rect, accepted.rect) > 0.28;
+    });
+
+    if (collision) {
+      if (item.kind === 'box' || item.kind === 'media' || item.kind === 'avatar') {
+        return [{ item: { ...item, label: undefined }, rect, readable: false }];
+      }
+      return [];
+    }
+
+    const prepared = { item, rect, readable };
+    acceptedReadable.push(prepared);
+    return [prepared];
+  });
+}
+
 function getPreviewRhythm(previewStyle: PreviewStyle, aspect: PreviewCanvas['aspect']) {
   const compactness = previewStyle.density === 'compact' ? 0.72 : previewStyle.density === 'spacious' ? 1.28 : 1;
   const isMobile = aspect === 'mobile';
@@ -1415,7 +1469,7 @@ function FreeformPreview({
       ? 'min(100%, 860px)'
       : 'min(100%, 1280px)';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
-  const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
+  const visibleItems = preparePreviewItems(previewCanvas.items);
 
   return (
     <div
@@ -1449,8 +1503,7 @@ function FreeformPreview({
                 : displayBg,
           }}
         />
-        {visibleItems.map((item, index) => {
-          const rect = clampCanvasRect(item);
+        {visibleItems.map(({ item, rect }, index) => {
           const itemColor = getItemColor(item, colors, display);
           const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : Math.max(4, radius * rhythm.itemScale * (item.kind === 'button' ? 0.72 : 0.56));
           const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);

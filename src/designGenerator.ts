@@ -193,12 +193,19 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
     .map((item): PreviewItem | null => {
       const source = item as Partial<PreviewItem>;
       if (!allowedBlockValues.itemKind.includes(source.kind as PreviewItem['kind'])) return null;
+      const x = clampPercent(source.x, 0);
+      const y = clampPercent(source.y, 0);
+      const rawW = Math.max(2, clampPercent(source.w, 20));
+      const rawH = Math.max(1, clampPercent(source.h, 8));
+      const maxW = Math.max(1, 100 - x);
+      const maxH = Math.max(0.8, 100 - y);
+
       return {
         kind: source.kind as PreviewItem['kind'],
-        x: clampPercent(source.x, 0),
-        y: clampPercent(source.y, 0),
-        w: Math.max(2, clampPercent(source.w, 20)),
-        h: Math.max(1, clampPercent(source.h, 8)),
+        x,
+        y,
+        w: Math.min(rawW, maxW),
+        h: Math.min(rawH, maxH),
         tone: allowedBlockValues.itemTone.includes(source.tone as PreviewItem['tone']) ? source.tone as PreviewItem['tone'] : 'muted',
         radius: allowedBlockValues.itemRadius.includes(source.radius as NonNullable<PreviewItem['radius']>) ? source.radius as PreviewItem['radius'] : 'soft',
         label: typeof source.label === 'string' ? source.label.trim().slice(0, 48) : undefined,
@@ -523,7 +530,7 @@ Rules:
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and selected System type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
-  items: 24 to 70 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the page structure without copying exact text or logos. Each item uses:
+  items: 24 to 70 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the page structure without copying exact text or logos. Prefer 36 to 60 items for detailed desktop/dashboard mockups and 24 to 42 items for mobile/simple screens. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider
     x, y, w, h: numbers from 0 to 100 as percentages inside the whole canvas
     tone: brand, surface, muted, contrast, text
@@ -533,6 +540,12 @@ Rules:
     shadow: none, soft, strong
     opacity: optional number from 0.08 to 1
     blur: optional boolean for soft decorative/media wash only
+- previewCanvas quality rules:
+  Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
+  Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
+  Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
+  Give readable labels enough width and height. If an element is too small for text, use line, divider, box, or media primitives instead of a readable label.
+  Preserve visual breathing room around edges, keep footer or bottom navigation visible when relevant, and avoid placing important text directly over busy media.
 - Return previewBlocks as optional category metadata for template hints. Prefer 4 to 6 blocks when the system type naturally has multiple sections. previewBlocks are not used to fully arrange the preview. Use only:
   component: header, hero, cards, form, table, footer
   span: full, wide, half, third

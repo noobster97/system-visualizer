@@ -1327,6 +1327,31 @@ function getItemColor(item: PreviewItem, colors: PaletteValues, display: { bg: s
   return item.kind === 'line' || item.kind === 'divider' ? display.border : display.highlight || colors.surfaceHighlight;
 }
 
+function clampCanvasRect(item: PreviewItem) {
+  const x = Math.min(98, Math.max(0, item.x));
+  const y = Math.min(98, Math.max(0, item.y));
+  const maxW = Math.max(1, 100 - x);
+  const maxH = Math.max(0.8, 100 - y);
+  const minW = item.kind === 'line' || item.kind === 'divider' ? 0.6 : 1.4;
+  const minH = item.kind === 'line' || item.kind === 'divider' ? 0.35 : 0.8;
+
+  return {
+    x,
+    y,
+    w: Math.min(Math.max(item.w, minW), maxW),
+    h: Math.min(Math.max(item.h, minH), maxH),
+  };
+}
+
+function previewItemLayer(item: PreviewItem) {
+  if (item.kind === 'box' || item.kind === 'media') return 1;
+  if (item.kind === 'line' || item.kind === 'divider') return 2;
+  if (item.kind === 'avatar') return 3;
+  if (item.kind === 'heading' || item.kind === 'text') return 4;
+  if (item.kind === 'button') return 5;
+  return 1;
+}
+
 function FreeformPreview({
   colors,
   font,
@@ -1355,42 +1380,60 @@ function FreeformPreview({
   const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[430px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[760px]' : 'aspect-[16/10] max-w-6xl';
   const activeCategories = new Set(components.map(getComponentCategory));
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
-  const visibleItems = previewCanvas.items.filter((item) => {
-    if (item.kind === 'divider' || item.kind === 'line') return activeCategories.has('table') || activeCategories.has('cards') || activeCategories.has('header');
-    if (item.kind === 'button') return activeCategories.has('form') || activeCategories.has('hero') || activeCategories.has('cards');
-    if (item.kind === 'media') return activeCategories.has('hero') || activeCategories.has('cards');
-    if (item.kind === 'avatar') return activeCategories.has('header') || activeCategories.has('cards');
-    return true;
-  });
+  const visibleItems = previewCanvas.items
+    .filter((item) => {
+      if (item.kind === 'divider' || item.kind === 'line') return activeCategories.has('table') || activeCategories.has('cards') || activeCategories.has('header');
+      if (item.kind === 'button') return activeCategories.has('form') || activeCategories.has('hero') || activeCategories.has('cards');
+      if (item.kind === 'media') return activeCategories.has('hero') || activeCategories.has('cards');
+      if (item.kind === 'avatar') return activeCategories.has('header') || activeCategories.has('cards');
+      return true;
+    })
+    .sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
 
   return (
     <div className="min-h-full p-3 sm:p-5" style={{ background: displayBg, color: displayText }}>
       <div className={`relative mx-auto w-full overflow-hidden shadow-2xl ${aspectClass}`} style={{ backgroundColor: displayBg, border: `1px solid ${displayBorder}`, borderRadius: radius + 8 }}>
         <div className="absolute inset-0" style={{ background: previewStyle.backgroundTreatment === 'brand-wash' ? `linear-gradient(135deg, ${mixColor(displayBg, colors.brand, 0.18)}, ${displayBg} 48%, ${mixColor(displaySurface, colors.brand, 0.08)})` : displayBg }} />
         {visibleItems.map((item, index) => {
+          const rect = clampCanvasRect(item);
           const itemColor = getItemColor(item, colors, display);
           const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : radius;
           const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);
           const shadow = item.shadow === 'strong' ? '0 22px 60px rgba(0,0,0,0.24)' : item.shadow === 'soft' ? '0 14px 34px rgba(0,0,0,0.14)' : 'none';
+          const layer = previewItemLayer(item);
           const commonStyle: React.CSSProperties = {
-            left: `${item.x}%`,
-            top: `${item.y}%`,
-            width: `${item.w}%`,
-            height: `${item.h}%`,
+            left: `${rect.x}%`,
+            top: `${rect.y}%`,
+            width: `${rect.w}%`,
+            height: `${rect.h}%`,
             opacity,
             borderRadius: itemRadius,
             boxShadow: shadow,
             filter: item.blur ? 'blur(14px)' : undefined,
+            pointerEvents: 'none',
+            zIndex: layer,
           };
 
           if (item.kind === 'heading' || item.kind === 'text') {
+            const hasRoomForText = rect.w >= (item.kind === 'heading' ? 9 : 7) && rect.h >= (item.kind === 'heading' ? 3.6 : 2.1);
+
+            if (!hasRoomForText) {
+              return (
+                <div
+                  key={`${item.kind}-${index}`}
+                  className="absolute"
+                  style={{ ...commonStyle, height: `${Math.min(rect.h, 1.2)}%`, backgroundColor: item.kind === 'heading' ? displayText : displayMuted, borderRadius: 999, opacity: Math.min(opacity, 0.48) }}
+                />
+              );
+            }
+
             return (
               <div
                 key={`${item.kind}-${index}`}
-                className="absolute flex items-center overflow-hidden"
-                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(13px, 1.8vw, 34px)' : 'clamp(9px, 0.9vw, 15px)' }}
+                className="absolute flex items-center overflow-hidden break-words leading-tight"
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(12px, 1.55vw, 30px)' : 'clamp(8px, 0.82vw, 14px)' }}
               >
-                {item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}
+                <span className="line-clamp-2">{item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}</span>
               </div>
             );
           }
@@ -1401,8 +1444,8 @@ function FreeformPreview({
 
           if (item.kind === 'button') {
             return (
-              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-2 text-center text-[10px] font-bold sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
-                {item.label || content.primaryAction}
+              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-2 text-center text-[10px] font-bold leading-none sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
+                {rect.w >= 7 && rect.h >= 3 ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
               </div>
             );
           }
@@ -1422,7 +1465,7 @@ function FreeformPreview({
 
           return (
             <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
-              {item.label && item.h > 4 && item.w > 10 && (
+              {item.label && rect.h > 4 && rect.w > 10 && (
                 <span className="absolute left-3 top-2 max-w-[85%] truncate text-[10px] font-bold" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
               )}
             </div>

@@ -1401,6 +1401,13 @@ function clampCanvasRect(item: PreviewItem) {
   };
 }
 
+function getCanvasTextSize(rect: ReturnType<typeof clampCanvasRect>, kind: 'heading' | 'text' | 'button' | 'label') {
+  if (kind === 'heading') return Math.max(7, Math.min(30, rect.h * 1.85, rect.w * 0.48));
+  if (kind === 'text') return Math.max(6, Math.min(14, rect.h * 1.35, rect.w * 0.34));
+  if (kind === 'button') return Math.max(6, Math.min(12, rect.h * 1.25, rect.w * 0.42));
+  return Math.max(6, Math.min(12, rect.h * 1.25, rect.w * 0.38));
+}
+
 function previewItemLayer(item: PreviewItem) {
   if (item.kind === 'box' || item.kind === 'media') return 1;
   if (item.kind === 'line' || item.kind === 'divider') return 2;
@@ -1527,6 +1534,8 @@ function FreeformPreview({
 
           if (item.kind === 'heading' || item.kind === 'text') {
             const hasRoomForText = rect.w >= (item.kind === 'heading' ? 9 : 7) && rect.h >= (item.kind === 'heading' ? 3.6 : 2.1);
+            const textSize = getCanvasTextSize(rect, item.kind);
+            const lineCount = rect.h >= (item.kind === 'heading' ? 8 : 5) && rect.w >= 12 ? 2 : 1;
 
             if (!hasRoomForText) {
               return (
@@ -1541,10 +1550,21 @@ function FreeformPreview({
             return (
               <div
                 key={`${item.kind}-${index}`}
-                className="absolute flex items-center overflow-hidden break-words leading-tight"
-                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(9px, 1.35vw, 34px)' : 'clamp(7px, 0.82vw, 15px)' }}
+                className="absolute flex items-center overflow-hidden leading-tight"
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: textSize }}
               >
-                <span className="line-clamp-2">{item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}</span>
+                <span
+                  style={{
+                    display: '-webkit-box',
+                    WebkitBoxOrient: 'vertical',
+                    WebkitLineClamp: lineCount,
+                    overflow: 'hidden',
+                    maxWidth: '100%',
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}
+                </span>
               </div>
             );
           }
@@ -1555,8 +1575,9 @@ function FreeformPreview({
 
           if (item.kind === 'button') {
             const canShowButtonLabel = rect.w >= 7 && rect.h >= 3;
+            const buttonTextSize = getCanvasTextSize(rect, 'button');
             return (
-              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px] lg:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
+              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center font-bold leading-none" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText, fontSize: buttonTextSize }}>
                 {canShowButtonLabel ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
               </div>
             );
@@ -1579,7 +1600,7 @@ function FreeformPreview({
           return (
             <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
               {item.label && rect.h > 4 && rect.w > 10 && (
-                <span className="absolute left-2 top-1.5 max-w-[85%] truncate text-[8px] font-bold sm:left-3 sm:top-2 sm:text-[10px] lg:text-xs" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
+                <span className="absolute left-2 top-1.5 max-w-[85%] truncate font-bold sm:left-3 sm:top-2" style={{ color: item.tone === 'brand' ? brandText : displayText, fontSize: getCanvasTextSize(rect, 'label') }}>{item.label}</span>
               )}
             </div>
           );

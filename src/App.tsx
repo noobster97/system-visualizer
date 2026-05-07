@@ -259,7 +259,7 @@ export default function App() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [folderHandle, setFolderHandle] = useState<any | null>(null);
   const [folderName, setFolderName] = useState('');
-  const [inputMode, setInputMode] = useState<InputMode>('brief');
+  const [inputMode, setInputMode] = useState<InputMode>('screenshot');
   const [brief, setBrief] = useState<DesignBrief>(emptyBrief);
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [palettes, setPalettes] = useState<Palette[]>([]);

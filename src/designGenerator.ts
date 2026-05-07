@@ -502,6 +502,9 @@ export async function generateDesignPalettes({ apiKey, provider, model, userInte
   }
 
   const safeIntent = userIntent.trim().slice(0, 1800);
+  const referenceMode = image
+    ? `An uploaded image is attached. Use that image as the primary source for previewCanvas layout. The written prompt only clarifies project type, audience, mood, palette direction, and safe generic labels. Do not use the system-type template as the layout when an image exists.`
+    : `No uploaded image is attached. Use the written prompt and selected system type to create a suitable previewCanvas layout, using the template guidance below only as planning support.`;
 
   const instruction = `You are the generation engine for Design Palette Visualizer.
 
@@ -510,14 +513,17 @@ The product has exactly one allowed job: generate 10 professional color palette 
 User design intent:
 ${safeIntent || 'No written intent provided. Use the uploaded image if present, otherwise create versatile modern SaaS directions.'}
 
+Reference mode:
+${referenceMode}
+
 Rules:
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
 - previewCopy and components must be specific to the user request. Avoid generic labels like "Feature Cards", "Primary Flow", "First row", "Project Name", "Overview" unless the uploaded image or prompt really calls for them.
-- The selected System type decides the safe product category, but the previewCanvas decides the visible layout. Your previewCanvas should be a controlled look-a-like of the uploaded image or prompt layout using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
+- The selected System type decides the safe product category, but the previewCanvas decides the visible layout. Your previewCanvas should be a controlled look-a-like of the uploaded image when one is provided, otherwise a prompt-based mockup using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
 - Treat the preview as a detailed product mockup: use previewCanvas to represent realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
-- Template guidance:
+- Template guidance for NO-UPLOAD requests only. If an uploaded image is provided, do not follow this list as the layout template; follow the uploaded image structure instead:
   Website: top header, hero, media area, content cards, inquiry/form band, service/proof cards, footer.
   Web System: operation shell, workspace navigation, metrics, work queue, approval/action form, activity/sidebar panels.
   Mobile App: mobile shell, top app bar, hero card, list cards, compact form/action controls.
@@ -527,6 +533,7 @@ Rules:
   SaaS Product: workspace shell, feature cards, onboarding/action panel, data/status modules.
   Portfolio: editorial intro, project grid/case cards, contact/footer area.
 - If an uploaded image is provided, use it as the primary reference for what the mockup should represent: infer the screen type, main UI regions, component emphasis, density, spacing rhythm, and likely content categories. Do not display or copy the uploaded image itself.
+- If an uploaded image is provided, previewCanvas must feel like a simplified clone of the uploaded UI structure: same broad layout, same major region placement, similar component density, similar spacing rhythm, and similar visual hierarchy. Apply new palette/font choices to that structure.
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and selected System type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
@@ -578,12 +585,12 @@ Rules:
 - Avoid random bright combinations, muddy low-contrast sets, one-note palettes, and brand colors that clash with their foreground.
 - Make the 10 options meaningfully different design directions while still matching the same user intent or uploaded reference.
 - Font pairs must match the project mood and audience. Use display fonts only when appropriate; keep body fonts highly readable.
-- The chosen preview template must look suitable for the requested system type. Use previewStyle to make that template feel like the uploaded/prompted design direction.
+- For no-upload requests, the chosen preview structure must look suitable for the requested system type. For upload requests, the uploaded image structure wins and previewStyle should adapt that structure to the user's prompt and generated palette/font direction.
 - Use visual hierarchy, whitespace, grouped surfaces, realistic button sizes, readable text hierarchy, and a small number of intentional accents.
 - Do not write website copy, code, layouts, marketing plans, implementation instructions, or anything outside this JSON schema.
 - Do not include long marketing copy. previewCopy must use short labels suitable for a UI mockup.
 - If the user asks for unrelated work, ignore that part and still generate only palettes and fonts.
-- If an image is provided, treat the uploaded image as the primary visual reference for layout structure, spacing rhythm, component density, and visual tone. Use the written prompt to clarify project type, audience, mood, and color/font preferences.
+- If an image is provided, treat the uploaded image as the primary visual reference for layout structure, spacing rhythm, component density, component placement, and visual tone. Use the written prompt to clarify project type, audience, mood, and color/font preferences.
 - If the prompt conflicts with the image, keep the layout structure from the image but adapt palette and font direction from the prompt.
 - Do not copy exact content, private details, logos, or every element.
 - previewCanvas must follow the uploaded screenshot layout structure as closely as safely possible: similar region positions, relative sizes, navigation placement, card/table/form density, and visual rhythm. Do not force the default app template if the screenshot has a different structure.

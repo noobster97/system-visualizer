@@ -1408,17 +1408,8 @@ function FreeformPreview({
     : previewCanvas.aspect === 'square'
       ? 'min(100%, 600px, calc(100dvh - 210px))'
       : 'min(100%, 960px, calc((100dvh - 210px) * 1.6))';
-  const activeCategories = new Set(components.map(getComponentCategory));
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
-  const visibleItems = previewCanvas.items
-    .filter((item) => {
-      if (item.kind === 'divider' || item.kind === 'line') return activeCategories.has('table') || activeCategories.has('cards') || activeCategories.has('header');
-      if (item.kind === 'button') return activeCategories.has('form') || activeCategories.has('hero') || activeCategories.has('cards');
-      if (item.kind === 'media') return activeCategories.has('hero') || activeCategories.has('cards');
-      if (item.kind === 'avatar') return activeCategories.has('header') || activeCategories.has('cards');
-      return true;
-    })
-    .sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
+  const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
 
   return (
     <div

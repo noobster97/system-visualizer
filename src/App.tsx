@@ -1382,6 +1382,18 @@ function clampCanvasRect(item: PreviewItem) {
   };
 }
 
+function rectOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<typeof clampCanvasRect>) {
+  const xOverlap = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+  const yOverlap = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  const overlapArea = xOverlap * yOverlap;
+  const minArea = Math.max(0.1, Math.min(a.w * a.h, b.w * b.h));
+  return overlapArea / minArea;
+}
+
+function isReadablePreviewItem(item: PreviewItem) {
+  return item.kind === 'heading' || item.kind === 'text' || item.kind === 'button' || item.kind === 'avatar';
+}
+
 function previewItemLayer(item: PreviewItem) {
   if (item.kind === 'box' || item.kind === 'media') return 1;
   if (item.kind === 'line' || item.kind === 'divider') return 2;
@@ -1449,6 +1461,7 @@ function FreeformPreview({
       : 'min(100%, 960px, calc((100dvh - 210px) * 1.6))';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
+  const readableRects: Array<ReturnType<typeof clampCanvasRect>> = [];
 
   return (
     <div
@@ -1484,6 +1497,8 @@ function FreeformPreview({
         />
         {visibleItems.map((item, index) => {
           const rect = clampCanvasRect(item);
+          const readableItem = isReadablePreviewItem(item);
+          const hasTextCollision = readableItem && readableRects.some((existingRect) => rectOverlapRatio(rect, existingRect) > 0.22);
           const itemColor = getItemColor(item, colors, display);
           const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : Math.max(4, radius * rhythm.itemScale * (item.kind === 'button' ? 0.72 : 0.56));
           const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);
@@ -1509,7 +1524,7 @@ function FreeformPreview({
           if (item.kind === 'heading' || item.kind === 'text') {
             const hasRoomForText = rect.w >= (item.kind === 'heading' ? 9 : 7) && rect.h >= (item.kind === 'heading' ? 3.6 : 2.1);
 
-            if (!hasRoomForText) {
+            if (!hasRoomForText || hasTextCollision) {
               return (
                 <div
                   key={`${item.kind}-${index}`}
@@ -1519,6 +1534,7 @@ function FreeformPreview({
               );
             }
 
+            readableRects.push(rect);
             return (
               <div
                 key={`${item.kind}-${index}`}
@@ -1535,9 +1551,11 @@ function FreeformPreview({
           }
 
           if (item.kind === 'button') {
+            const canShowButtonLabel = rect.w >= 7 && rect.h >= 3 && !hasTextCollision;
+            if (canShowButtonLabel) readableRects.push(rect);
             return (
               <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px]" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
-                {rect.w >= 7 && rect.h >= 3 ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
+                {canShowButtonLabel ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
               </div>
             );
           }
@@ -1552,7 +1570,9 @@ function FreeformPreview({
           }
 
           if (item.kind === 'avatar') {
-            return <div key={`${item.kind}-${index}`} className="absolute grid place-items-center text-xs font-black" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>{item.label || content.initial}</div>;
+            const canShowAvatarLabel = rect.w >= 3 && rect.h >= 3 && !hasTextCollision;
+            if (canShowAvatarLabel) readableRects.push(rect);
+            return <div key={`${item.kind}-${index}`} className="absolute grid place-items-center text-[9px] font-black sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>{canShowAvatarLabel ? item.label || content.initial : null}</div>;
           }
 
           return (
@@ -1653,7 +1673,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
       ))}
     </div>
   );
-  const canUseFreeform = Boolean(previewCanvas?.items?.length && previewCanvas.items.length >= 8);
+  const canUseFreeform = Boolean(previewCanvas?.items?.length && previewCanvas.items.length >= 4);
 
   if (canUseFreeform && previewCanvas) {
     return (

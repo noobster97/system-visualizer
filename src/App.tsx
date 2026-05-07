@@ -1161,109 +1161,105 @@ const PaletteShowcase: React.FC<{
 
   return (
     <section className="flex flex-col h-full w-full overflow-hidden">
-      <div className="grid gap-3 pb-3 border-b border-opacity-20 shrink-0 mb-3 xl:grid-cols-[1fr_auto]" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
-        <div className="space-y-3 min-w-0">
+      <div className="space-y-3 pb-3 border-b border-opacity-20 shrink-0 mb-3" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+        <div className="min-w-0">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: colors.textMuted }}>Preview</p>
             <p className="mt-1 text-sm" style={{ color: colors.textMuted }}>
               {previewStyle.layoutPattern} / {previewStyle.heroTreatment} / {previewStyle.componentTreatment}
             </p>
           </div>
-
-          <div className="app-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {palettes.map((option, index) => {
-              const optionColors = isDark ? option.colors.dark : option.colors.light;
-              const active = option.id === selectedPaletteId;
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => setSelectedPaletteId(option.id)}
-                  className={`flex min-w-[150px] items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-all ${
-                    active
-                      ? isDark ? 'border-violet-400 bg-violet-500/15' : 'border-violet-300 bg-violet-50'
-                      : isDark ? 'border-zinc-800 bg-zinc-900/70 hover:border-zinc-700' : 'border-slate-200 bg-white/80 hover:border-slate-300'
-                  }`}
-                  title={`${option.name}: ${option.fonts.headingName} + ${option.fonts.bodyName}`}
-                >
-                  <span className="text-[10px] font-bold opacity-60">{String(index + 1).padStart(2, '0')}</span>
-                  <span className="flex -space-x-1">
-                    {[optionColors.brand, optionColors.surface, optionColors.bg].map((hex) => (
-                      <span key={hex} className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: hex }} />
-                    ))}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xs font-semibold">{option.name}</span>
-                    <span className="block truncate text-[10px]" style={{ color: colors.textMuted }}>{option.fonts.headingName}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className={`flex border rounded-lg p-1 shadow-inner ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-200/50 border-slate-200'}`}>
-              <button
-                onClick={() => setIsDark(false)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${!isDark ? 'bg-white text-slate-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                title="Preview light mode"
-              >
-                <Sun className="w-3 h-3" /> LIGHT
-              </button>
-              <button
-                onClick={() => setIsDark(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${isDark ? 'bg-zinc-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                title="Preview dark mode"
-              >
-                <Moon className="w-3 h-3" /> DARK
-              </button>
-            </div>
-
-            <button
-              onClick={copyPalette}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-                copied
-                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
-                  : isDark
-                    ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 hover:border-zinc-500'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-sm'
-              }`}
-              title="Copy palette and font prompt"
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied to Clipboard!' : 'Copy UI Prompt'}
-            </button>
-          </div>
         </div>
 
-        <div className="grid gap-2 xl:w-[380px]">
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={headingFontName}
-              onChange={(event) => setSelectedHeadingFont(event.target.value)}
-              className={`pretty-select rounded-lg border px-3 py-2 text-xs font-semibold outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-100' : 'bg-white border-slate-200 text-slate-900'}`}
-              title="Heading font"
-            >
-              {headingFontChoices.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-            <select
-              value={bodyFontName}
-              onChange={(event) => setSelectedBodyFont(event.target.value)}
-              className={`pretty-select rounded-lg border px-3 py-2 text-xs font-semibold outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-100' : 'bg-white border-slate-200 text-slate-900'}`}
-              title="Body font"
-            >
-              {bodyFontChoices.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/5 p-1.5" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}>
-            {(Object.entries(colors) as [keyof PaletteValues, string][]).slice(0, 6).map(([name, hex]) => (
-              <button key={name} className="group relative cursor-pointer" onClick={() => copyColor(hex, name)} title={`Copy ${name}: ${hex}`}>
-                <div className="h-7 w-7 rounded-full shadow-sm transition-transform hover:scale-110 active:scale-95" style={{ backgroundColor: hex, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }} />
-                <span className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[9px] font-bold uppercase text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                  {copiedHex === name ? 'Copied' : name}
+        <div className="app-scrollbar flex gap-2 overflow-x-auto pb-1">
+          {palettes.map((option, index) => {
+            const optionColors = isDark ? option.colors.dark : option.colors.light;
+            const active = option.id === selectedPaletteId;
+            return (
+              <button
+                key={option.id}
+                onClick={() => setSelectedPaletteId(option.id)}
+                className={`flex min-w-[150px] items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-all ${
+                  active
+                    ? isDark ? 'border-violet-400 bg-violet-500/15' : 'border-violet-300 bg-violet-50'
+                    : isDark ? 'border-zinc-800 bg-zinc-900/70 hover:border-zinc-700' : 'border-slate-200 bg-white/80 hover:border-slate-300'
+                }`}
+                title={`${option.name}: ${option.fonts.headingName} + ${option.fonts.bodyName}`}
+              >
+                <span className="text-[10px] font-bold opacity-60">{String(index + 1).padStart(2, '0')}</span>
+                <span className="flex -space-x-1">
+                  {[optionColors.brand, optionColors.surface, optionColors.bg].map((hex) => (
+                    <span key={hex} className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: hex }} />
+                  ))}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold">{option.name}</span>
+                  <span className="block truncate text-[10px]" style={{ color: colors.textMuted }}>{option.fonts.headingName}</span>
                 </span>
               </button>
-            ))}
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className={`flex border rounded-lg p-1 shadow-inner ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-slate-200/50 border-slate-200'}`}>
+            <button
+              onClick={() => setIsDark(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${!isDark ? 'bg-white text-slate-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+              title="Preview light mode"
+            >
+              <Sun className="w-3 h-3" /> LIGHT
+            </button>
+            <button
+              onClick={() => setIsDark(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${isDark ? 'bg-zinc-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              title="Preview dark mode"
+            >
+              <Moon className="w-3 h-3" /> DARK
+            </button>
+          </div>
+
+          <button
+            onClick={copyPalette}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
+              copied
+                ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                : isDark
+                  ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 hover:border-zinc-500'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-sm'
+            }`}
+            title="Copy palette and font prompt"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'Copied!' : 'Copy UI Prompt'}
+          </button>
+
+          <select
+            value={headingFontName}
+            onChange={(event) => setSelectedHeadingFont(event.target.value)}
+            className={`pretty-select min-w-[150px] flex-1 rounded-lg border px-3 py-2 text-xs font-semibold outline-none sm:flex-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-100' : 'bg-white border-slate-200 text-slate-900'}`}
+            title="Heading font"
+          >
+            {headingFontChoices.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+          <select
+            value={bodyFontName}
+            onChange={(event) => setSelectedBodyFont(event.target.value)}
+            className={`pretty-select min-w-[150px] flex-1 rounded-lg border px-3 py-2 text-xs font-semibold outline-none sm:flex-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-zinc-100' : 'bg-white border-slate-200 text-slate-900'}`}
+            title="Body font"
+          >
+            {bodyFontChoices.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+
+          <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/5 p-1.5" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}>
+          {(Object.entries(colors) as [keyof PaletteValues, string][]).slice(0, 6).map(([name, hex]) => (
+            <button key={name} className="group relative cursor-pointer" onClick={() => copyColor(hex, name)} title={`Copy ${name}: ${hex}`}>
+              <div className="h-7 w-7 rounded-full shadow-sm transition-transform hover:scale-110 active:scale-95" style={{ backgroundColor: hex, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }} />
+              <span className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[9px] font-bold uppercase text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                {copiedHex === name ? 'Copied' : name}
+              </span>
+            </button>
+          ))}
           </div>
         </div>
       </div>

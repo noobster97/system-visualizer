@@ -838,16 +838,18 @@ export default function App() {
                 </div>
 
                 <div className="mt-3 space-y-3">
-                  <input
-                    value={brief.industry}
-                    onChange={(event) => updateBrief('industry', event.target.value)}
-                    placeholder={inputMode === 'screenshot' ? 'Optional context e.g. restaurant reservation app' : 'What is it for? e.g. restaurant reservation app'}
-                    className={`w-full text-sm px-3 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
-                  />
+                  {inputMode === 'brief' && (
+                    <input
+                      value={brief.industry}
+                      onChange={(event) => updateBrief('industry', event.target.value)}
+                      placeholder="What is it for? e.g. restaurant reservation app"
+                      className={`w-full text-sm px-3 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
+                    />
+                  )}
                   <input
                     value={brief.audience}
                     onChange={(event) => updateBrief('audience', event.target.value)}
-                    placeholder="Who will use it? e.g. premium wedding clients"
+                    placeholder={inputMode === 'screenshot' ? 'Optional audience e.g. premium clients' : 'Who will use it? e.g. premium wedding clients'}
                     className={`w-full text-sm px-3 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
                   />
                   <input
@@ -859,7 +861,7 @@ export default function App() {
                   <textarea
                     value={brief.notes}
                     onChange={(event) => updateBrief('notes', event.target.value)}
-                    placeholder="Color/font rules only. Example: avoid neon, soft contrast, elegant headings, readable body text..."
+                    placeholder={inputMode === 'screenshot' ? 'Color/font notes only. Example: warmer palette, avoid neon, elegant headings...' : 'Color/font rules only. Example: avoid neon, soft contrast, elegant headings, readable body text...'}
                     className={`app-scrollbar w-full min-h-[92px] resize-none text-sm leading-relaxed px-3 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
                   />
                 </div>

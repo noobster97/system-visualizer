@@ -1277,7 +1277,7 @@ const PaletteShowcase: React.FC<{
 
       <div className="app-scrollbar flex-1 w-full rounded-xl sm:rounded-2xl overflow-y-auto overflow-x-hidden shadow-2xl relative" style={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}` }}>
         <div className="min-h-full">
-          <ImplementationPreview colors={colors} font={headingFontFamily} content={content} previewStyle={previewStyle} components={components} />
+          <ImplementationPreview colors={colors} font={headingFontFamily} content={content} previewStyle={previewStyle} components={components} previewCanvas={previewCanvas} />
         </div>
       </div>
     </section>
@@ -1319,7 +1319,121 @@ function TemplateMedia({ colors }: { colors: PaletteValues }) {
   );
 }
 
-function ImplementationPreview({ colors, font, content, previewStyle, components }: { colors: PaletteValues; font: string; content: PreviewContent; previewStyle: PreviewStyle; components: PreviewComponent[] }) {
+function getItemColor(item: PreviewItem, colors: PaletteValues, display: { bg: string; surface: string; highlight: string; text: string; muted: string; border: string; brand: string; brandText: string }) {
+  if (item.tone === 'brand') return display.brand;
+  if (item.tone === 'surface') return display.surface;
+  if (item.tone === 'contrast') return display.text;
+  if (item.tone === 'text') return display.text;
+  return item.kind === 'line' || item.kind === 'divider' ? display.border : display.highlight || colors.surfaceHighlight;
+}
+
+function FreeformPreview({
+  colors,
+  font,
+  content,
+  previewCanvas,
+  previewStyle,
+  components,
+}: {
+  colors: PaletteValues;
+  font: string;
+  content: PreviewContent;
+  previewCanvas: PreviewCanvas;
+  previewStyle: PreviewStyle;
+  components: PreviewComponent[];
+}) {
+  const darkMode = colorLuminance(colors.bg) < 0.35;
+  const displayBg = darkMode ? mixColor(colors.bg, '#000000', 0.18) : colors.bg;
+  const displaySurface = darkMode ? mixColor(colors.surface, '#FFFFFF', 0.04) : colors.surface;
+  const displayHighlight = darkMode ? mixColor(colors.surfaceHighlight, '#FFFFFF', 0.08) : colors.surfaceHighlight;
+  const displayText = readableColor(displayBg, colors.text);
+  const displayMuted = darkMode ? mixColor(displayText, displayBg, 0.45) : colors.textMuted;
+  const displayBorder = darkMode ? mixColor(colors.border, '#FFFFFF', 0.12) : colors.border;
+  const calmBrand = darkMode ? mixColor(colors.brand, displayBg, 0.28) : mixColor(colors.brand, displaySurface, 0.1);
+  const brandText = readableColor(calmBrand, colors.brandForeground);
+  const radius = previewStyle.cornerStyle === 'sharp' ? 6 : previewStyle.cornerStyle === 'rounded' ? 22 : 14;
+  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[430px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[760px]' : 'aspect-[16/10] max-w-6xl';
+  const activeCategories = new Set(components.map(getComponentCategory));
+  const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
+  const visibleItems = previewCanvas.items.filter((item) => {
+    if (item.kind === 'divider' || item.kind === 'line') return activeCategories.has('table') || activeCategories.has('cards') || activeCategories.has('header');
+    if (item.kind === 'button') return activeCategories.has('form') || activeCategories.has('hero') || activeCategories.has('cards');
+    if (item.kind === 'media') return activeCategories.has('hero') || activeCategories.has('cards');
+    if (item.kind === 'avatar') return activeCategories.has('header') || activeCategories.has('cards');
+    return true;
+  });
+
+  return (
+    <div className="min-h-full p-3 sm:p-5" style={{ background: displayBg, color: displayText }}>
+      <div className={`relative mx-auto w-full overflow-hidden shadow-2xl ${aspectClass}`} style={{ backgroundColor: displayBg, border: `1px solid ${displayBorder}`, borderRadius: radius + 8 }}>
+        <div className="absolute inset-0" style={{ background: previewStyle.backgroundTreatment === 'brand-wash' ? `linear-gradient(135deg, ${mixColor(displayBg, colors.brand, 0.18)}, ${displayBg} 48%, ${mixColor(displaySurface, colors.brand, 0.08)})` : displayBg }} />
+        {visibleItems.map((item, index) => {
+          const itemColor = getItemColor(item, colors, display);
+          const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : radius;
+          const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);
+          const shadow = item.shadow === 'strong' ? '0 22px 60px rgba(0,0,0,0.24)' : item.shadow === 'soft' ? '0 14px 34px rgba(0,0,0,0.14)' : 'none';
+          const commonStyle: React.CSSProperties = {
+            left: `${item.x}%`,
+            top: `${item.y}%`,
+            width: `${item.w}%`,
+            height: `${item.h}%`,
+            opacity,
+            borderRadius: itemRadius,
+            boxShadow: shadow,
+            filter: item.blur ? 'blur(14px)' : undefined,
+          };
+
+          if (item.kind === 'heading' || item.kind === 'text') {
+            return (
+              <div
+                key={`${item.kind}-${index}`}
+                className="absolute flex items-center overflow-hidden"
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(13px, 1.8vw, 34px)' : 'clamp(9px, 0.9vw, 15px)' }}
+              >
+                {item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}
+              </div>
+            );
+          }
+
+          if (item.kind === 'line' || item.kind === 'divider') {
+            return <div key={`${item.kind}-${index}`} className="absolute" style={{ ...commonStyle, backgroundColor: displayBorder }} />;
+          }
+
+          if (item.kind === 'button') {
+            return (
+              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-2 text-center text-[10px] font-bold sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
+                {item.label || content.primaryAction}
+              </div>
+            );
+          }
+
+          if (item.kind === 'media') {
+            return (
+              <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, background: `linear-gradient(135deg, ${mixColor(itemColor, colors.brand, 0.2)}, ${mixColor(itemColor, displayBg, 0.24)})`, border: `1px solid ${displayBorder}` }}>
+                <div className="absolute inset-x-4 bottom-4 h-2 rounded-full" style={{ backgroundColor: mixColor(displayText, displayBg, 0.55), opacity: 0.6 }} />
+                <div className="absolute bottom-8 left-4 h-2 w-1/2 rounded-full" style={{ backgroundColor: displayText, opacity: 0.22 }} />
+              </div>
+            );
+          }
+
+          if (item.kind === 'avatar') {
+            return <div key={`${item.kind}-${index}`} className="absolute grid place-items-center text-xs font-black" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>{item.label || content.initial}</div>;
+          }
+
+          return (
+            <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
+              {item.label && item.h > 4 && item.w > 10 && (
+                <span className="absolute left-3 top-2 max-w-[85%] truncate text-[10px] font-bold" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ImplementationPreview({ colors, font, content, previewStyle, components, previewCanvas }: { colors: PaletteValues; font: string; content: PreviewContent; previewStyle: PreviewStyle; components: PreviewComponent[]; previewCanvas: PreviewCanvas | null }) {
   const darkMode = colorLuminance(colors.bg) < 0.35;
   const displayBg = darkMode ? mixColor(colors.bg, '#000000', 0.22) : colors.bg;
   const displaySurface = darkMode ? mixColor(colors.surface, '#FFFFFF', 0.04) : colors.surface;
@@ -1404,6 +1518,20 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
       ))}
     </div>
   );
+  const canUseFreeform = Boolean(previewCanvas?.items?.length && previewCanvas.items.length >= 8);
+
+  if (canUseFreeform && previewCanvas) {
+    return (
+      <FreeformPreview
+        colors={colors}
+        font={font}
+        content={content}
+        previewCanvas={previewCanvas}
+        previewStyle={previewStyle}
+        components={components}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-full ${compact ? 'p-2 sm:p-3' : spacious ? 'p-5 sm:p-6' : 'p-3 sm:p-4'}`} style={{ background: previewBackground }}>

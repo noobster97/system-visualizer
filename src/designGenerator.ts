@@ -209,7 +209,7 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
       };
     })
     .filter((item): item is PreviewItem => Boolean(item))
-    .slice(0, 28);
+    .slice(0, 70);
 }
 
 function normalizeGeneration(raw: unknown): DesignGeneration {
@@ -508,8 +508,8 @@ Rules:
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
 - previewCopy and components must be specific to the user request. Avoid generic labels like "Feature Cards", "Primary Flow", "First row", "Project Name", "Overview" unless the uploaded image or prompt really calls for them.
-- The selected System type decides the preview template. The app has one dedicated template path for each System type: Website, Web System, Mobile App, Dashboard, Landing Page, E-commerce, SaaS Product, and Portfolio. Your job is to choose metadata, colors, and fonts that make that exact template type feel appropriate and detailed.
-- Treat the preview as a detailed product mockup: choose metadata that supports realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
+- The selected System type decides the safe product category, but the previewCanvas decides the visible layout. Your previewCanvas should be a controlled look-a-like of the uploaded image or prompt layout using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
+- Treat the preview as a detailed product mockup: use previewCanvas to represent realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
 - Template guidance:
   Website: top header, hero, media area, content cards, inquiry/form band, service/proof cards, footer.
   Web System: operation shell, workspace navigation, metrics, work queue, approval/action form, activity/sidebar panels.
@@ -521,9 +521,9 @@ Rules:
   Portfolio: editorial intro, project grid/case cards, contact/footer area.
 - If an uploaded image is provided, use it as the primary reference for what the mockup should represent: infer the screen type, main UI regions, component emphasis, density, spacing rhythm, and likely content categories. Do not display or copy the uploaded image itself.
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and selected System type.
-- Return previewCanvas as optional metadata only. The app does not render a freeform canvas. If included, keep it simple:
+- Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
-  items: 8 to 24 positioned primitive shapes across the whole preview canvas. Each item uses:
+  items: 24 to 70 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the page structure without copying exact text or logos. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider
     x, y, w, h: numbers from 0 to 100 as percentages inside the whole canvas
     tone: brand, surface, muted, contrast, text
@@ -572,6 +572,7 @@ Rules:
 - If an image is provided, treat the uploaded image as the primary visual reference for layout structure, spacing rhythm, component density, and visual tone. Use the written prompt to clarify project type, audience, mood, and color/font preferences.
 - If the prompt conflicts with the image, keep the layout structure from the image but adapt palette and font direction from the prompt.
 - Do not copy exact content, private details, logos, or every element.
+- previewCanvas must follow the uploaded screenshot layout structure as closely as safely possible: similar region positions, relative sizes, navigation placement, card/table/form density, and visual rhythm. Do not force the default app template if the screenshot has a different structure.
 - previewCopy should visibly reflect the prompt. For example "restaurant booking, VVIP client, romantic" can become heroTitle "Romantic VVIP Dining", cardTitles ["Private Table", "Chef Menu", "Guest Notes"], formFields ["Guest Name", "Date", "Occasion"], tableRows ["Window Suite", "Garden Room", "Chef Counter"].
 - When a screenshot is uploaded, previewCopy should also reflect the screenshot's visible structure. For example:
   Dashboard screenshot: components ["KPI Cards", "Analytics Chart", "Activity Table", "Filter Bar"], tableRows like ["Revenue Trend", "Booking Source", "Client Segment"].
@@ -581,6 +582,7 @@ Rules:
 - Choose component names that match the detected or requested interface. For example dashboard screenshots can include KPI Cards, Analytics Chart, Activity Table, Filter Bar; landing pages can include Top Navigation, Hero CTA, Benefit Cards, Lead Form, Footer Links; restaurant booking can include Dining Hero, Reservation Cards, Booking Form, Guest Details, Footer.
 - Do not always choose the same block spans or tones. If the upload has a strong top bar, use header/full/surface or brand. If it has image/product sections, use hero/media or cards/media. If it has data, use cards/metric and table/list.
 - Do not always use the same previewStyle. Match the uploaded/prompt layout rhythm: centered hero, split media, metrics dashboard, image-first gallery, form-led app, editorial text, or sectioned product page.
+- Do not always use the same previewCanvas. Different uploads/prompts must produce visibly different item positions and composition.
 - Do not apply the brand color to every component. Choose a realistic mix of brand areas, neutral surfaces, soft bands, and contrast accents.
 - Use only valid 6-digit hex colors.
 - Keep light themes readable on light backgrounds and dark themes readable on dark backgrounds.
@@ -616,7 +618,10 @@ Return only valid JSON in this exact shape:
       { "kind": "box", "x": 0, "y": 0, "w": 100, "h": 100, "tone": "surface", "radius": "none" },
       { "kind": "heading", "x": 8, "y": 12, "w": 38, "h": 8, "tone": "text", "radius": "none", "label": "Generic heading" },
       { "kind": "media", "x": 56, "y": 12, "w": 34, "h": 38, "tone": "muted", "radius": "soft" },
-      { "kind": "button", "x": 8, "y": 34, "w": 16, "h": 7, "tone": "brand", "radius": "soft", "label": "Action" }
+      { "kind": "button", "x": 8, "y": 34, "w": 16, "h": 7, "tone": "brand", "radius": "soft", "label": "Action" },
+      { "kind": "box", "x": 8, "y": 56, "w": 24, "h": 20, "tone": "muted", "radius": "soft" },
+      { "kind": "box", "x": 38, "y": 56, "w": 24, "h": 20, "tone": "surface", "radius": "soft" },
+      { "kind": "box", "x": 68, "y": 56, "w": 24, "h": 20, "tone": "surface", "radius": "soft" }
     ]
   },
   "previewBlocks": [

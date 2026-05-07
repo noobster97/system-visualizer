@@ -1388,10 +1388,6 @@ function getOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<ty
   return overlapArea / smallerArea;
 }
 
-function hasReadableEdgeRisk(rect: ReturnType<typeof clampCanvasRect>) {
-  return rect.x < 0.8 || rect.y < 0.8 || rect.x + rect.w > 99.2 || rect.y + rect.h > 99.2 || rect.w < 6 || rect.h < 2.4;
-}
-
 function preparePreviewItems(items: PreviewItem[]) {
   const structural = [...items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
   const acceptedReadable: PreparedPreviewItem[] = [];
@@ -1428,20 +1424,6 @@ function preparePreviewItems(items: PreviewItem[]) {
         kind: fallbackKind,
         label: undefined,
         h: fallbackKind === 'line' ? Math.min(rect.h, 1.2) : displayItem.h,
-        opacity: Math.min(displayItem.opacity ?? 0.58, 0.58),
-      };
-      return [{ item: fallbackItem, rect: clampCanvasRect(fallbackItem), readable: false }];
-    }
-
-    if (hasReadableEdgeRisk(rect)) {
-      if (displayItem.kind === 'box' || displayItem.kind === 'media' || displayItem.kind === 'avatar') {
-        return [{ item: { ...displayItem, label: undefined }, rect, readable: false }];
-      }
-      const fallbackItem: PreviewItem = {
-        ...displayItem,
-        kind: displayItem.kind === 'button' ? 'button' : 'line',
-        label: undefined,
-        h: displayItem.kind === 'button' ? displayItem.h : Math.min(rect.h, 1.2),
         opacity: Math.min(displayItem.opacity ?? 0.58, 0.58),
       };
       return [{ item: fallbackItem, rect: clampCanvasRect(fallbackItem), readable: false }];

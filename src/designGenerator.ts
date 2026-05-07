@@ -243,6 +243,35 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
     .slice(0, 100);
 }
 
+function isReadablePreviewItem(item: PreviewItem) {
+  return item.kind === 'heading' || item.kind === 'text' || item.kind === 'button' || Boolean(item.label);
+}
+
+function hasUnsafeReadablePosition(item: PreviewItem) {
+  if (!isReadablePreviewItem(item)) return false;
+  return item.x < 1.5 || item.y < 1.5 || item.x + item.w > 98.5 || item.y + item.h > 98.5 || item.w < 6 || item.h < 2.4;
+}
+
+function validatePreviewCanvas(canvas: PreviewCanvas) {
+  if (canvas.items.length < 36) {
+    throw new Error('AI returned an incomplete preview. Please generate again.');
+  }
+
+  const readableItems = canvas.items.filter(isReadablePreviewItem);
+  const unsafeReadableCount = readableItems.filter(hasUnsafeReadablePosition).length;
+  if (unsafeReadableCount > Math.max(3, Math.floor(readableItems.length * 0.18))) {
+    throw new Error('AI returned a preview with unsafe text placement. Please generate again.');
+  }
+
+  const largeEmptyPanels = canvas.items.filter((item) => {
+    const area = item.w * item.h;
+    return (item.kind === 'box' || item.kind === 'media') && area > 3600 && item.opacity !== undefined && item.opacity < 0.35;
+  });
+  if (largeEmptyPanels.length > 1) {
+    throw new Error('AI returned a preview with weak layout structure. Please generate again.');
+  }
+}
+
 function normalizeGeneration(raw: unknown): DesignGeneration {
   const source = raw as {
     palettes?: Array<{
@@ -352,9 +381,7 @@ function normalizeGeneration(raw: unknown): DesignGeneration {
     items: normalizePreviewItems(source.previewCanvas?.items),
   };
 
-  if (previewCanvas.items.length < 36) {
-    throw new Error('AI returned an incomplete preview. Please generate again.');
-  }
+  validatePreviewCanvas(previewCanvas);
 
   return { palettes, components: finalComponents.length ? finalComponents : defaultComponents, previewCopy, previewStyle, previewBlocks: normalizedBlocks, previewCanvas };
 }
@@ -574,6 +601,7 @@ Rules:
 - If an uploaded image is provided, use it as the primary reference for what the mockup should represent: infer the screen type, main UI regions, component emphasis, density, spacing rhythm, and likely content categories. Do not display or copy the uploaded image itself.
 - If an uploaded image is provided, previewCanvas must feel like a simplified clone of the uploaded UI structure: same broad layout, same major region placement, similar component density, similar spacing rhythm, and similar visual hierarchy. Apply new palette/font choices to that structure.
 - For screenshot uploads, build previewCanvas from the screenshot like a layout tracing pass: identify the visible canvas bounds, then map each major region to percentage coordinates before adding details. Preserve the relative positions of header, navigation, hero/title, controls, cards/lists/forms, content bands, and footer/bottom sections.
+- Clone the screenshot/brief at the level of major UI composition, not by scattering every tiny element. Use 5 to 9 clear visual regions, then add internal details with lines, media, cards, chips, and a small number of readable labels.
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and detected or selected Project type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be complete enough to stand alone, because the app should not invent the layout after your response. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
@@ -593,6 +621,8 @@ Rules:
   Build a polished first-viewport preview, not a full long webpage squeezed into one frame. Include the most important visible sections and hint at lower sections with compact bands/cards/footer primitives when needed.
   Keep the mockup composed inside the fixed canvas frame. Do not spread important regions far apart, leave large empty middle areas, or place key labels/actions at the extreme right/bottom edge.
   Keep readable heading/text/button/label items inside a safe area: normally x >= 2, y >= 2, x + w <= 98, y + h <= 98. Use line/divider/media/box primitives for edge details, skeleton text, footer hints, and dense repeated content.
+  Do not put readable text on thin strips, tiny boxes, or clipped corners. If a screenshot has tiny edge text, represent it with lines/dividers or unlabeled boxes.
+  Keep card grids and repeated chips aligned with consistent gutters. Do not overlap cards, search controls, chips, or bottom bars.
   Completeness check: previewCanvas must include the visible layout skeleton, important sections, repeated groups, primary controls, content areas, and bottom/footer areas when relevant. Do not return only palette names, fonts, and a few sample cards.
   Do a pairwise overlap check for all readable heading, text, button, and labeled box items. If two readable labels overlap or compete visually, move one, enlarge its parent region, shorten its label, reduce its textSize one step, or replace secondary detail with line/divider primitives.
   Do a final viewport-fit check at desktop width: all important text, controls, cards, and bottom sections must be visible inside the 0-100 canvas without accidental clipping, stacking, or horizontal overflow.

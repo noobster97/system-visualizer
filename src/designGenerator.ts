@@ -330,7 +330,7 @@ function normalizeGeneration(raw: unknown): DesignGeneration {
     items: normalizePreviewItems(source.previewCanvas?.items),
   };
 
-  if (previewCanvas.items.length < 24) {
+  if (previewCanvas.items.length < 36) {
     throw new Error('AI returned an incomplete preview. Please generate again.');
   }
 
@@ -373,6 +373,12 @@ function getOutputText(payload: any) {
     ?.map((part: any) => part?.text || '')
     ?.join('');
   return outputText || '';
+}
+
+function shouldRetryGeneration(error: unknown) {
+  if (getErrorStatus(error)) return false;
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /incomplete preview|invalid result|JSON|Unexpected token|Unexpected end/i.test(message);
 }
 
 function normalizeModelList(provider: AiProvider, names: string[]) {
@@ -742,14 +748,38 @@ Return only valid JSON in this exact shape:
   ]
 }`;
 
-  try {
+  const requestGeneration = async (nextInstruction: string) => {
     const text = provider === 'openai'
-      ? await generateWithOpenAI(trimmedApiKey, selectedModel, instruction, image)
+      ? await generateWithOpenAI(trimmedApiKey, selectedModel, nextInstruction, image)
       : provider === 'anthropic'
-        ? await generateWithAnthropic(trimmedApiKey, selectedModel, instruction, image)
-        : await generateWithGemini(trimmedApiKey, selectedModel, instruction, image);
+        ? await generateWithAnthropic(trimmedApiKey, selectedModel, nextInstruction, image)
+        : await generateWithGemini(trimmedApiKey, selectedModel, nextInstruction, image);
 
     return normalizeGeneration(JSON.parse(extractJsonText(text)));
+  };
+
+  try {
+    try {
+      return await requestGeneration(instruction);
+    } catch (firstError) {
+      if (!shouldRetryGeneration(firstError)) throw firstError;
+
+      const repairInstruction = `${instruction}
+
+QUALITY REPAIR REQUIRED:
+Your previous response was incomplete or malformed for this app. Return the same JSON shape again, but this time it must be complete and directly renderable:
+- exactly 10 palettes
+- previewCopy with project-specific UI labels
+- previewStyle
+- components
+- previewCanvas.items with at least 36 valid items, preferably 70 to 120 for desktop/screenshot/dashboard/marketplace screens
+- include all important UI regions needed for the uploaded screenshot or written brief
+- do not omit the footer/bottom/content regions when relevant
+- do not put layout details in unsupported fields
+- return only valid JSON`;
+
+      return await requestGeneration(repairInstruction);
+    }
   } catch (error) {
     if (getErrorStatus(error) === 503) {
       throw new Error(`${providerDefaults[provider].label} is currently busy. Please wait a moment, then try Generate again.`);

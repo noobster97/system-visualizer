@@ -75,7 +75,8 @@ type PreviewContent = {
 
 const maxSavedHistory = 20;
 const generateCooldownMs = 8000;
-const systemTypes = ['Website', 'Web System', 'Mobile App', 'Dashboard', 'Landing Page', 'E-commerce', 'SaaS Product', 'Portfolio'];
+const autoProjectType = 'Auto-detect from upload';
+const systemTypes = [autoProjectType, 'Website', 'Web System', 'Mobile App', 'Dashboard', 'Landing Page', 'E-commerce', 'SaaS Product', 'Portfolio'];
 const designTypes = ['Minimal', 'Corporate', 'Luxury', 'Playful', 'Editorial', 'Futuristic', 'Warm', 'Bold', 'Calm', 'High Contrast'];
 const defaultPreviewComponents: PreviewComponent[] = ['Header', 'Hero Showcase', 'Feature Cards', 'Contact Form', 'Footer'];
 const defaultPreviewStyle: PreviewStyle = {
@@ -93,7 +94,7 @@ const defaultPreviewStyle: PreviewStyle = {
 };
 
 const emptyBrief: DesignBrief = {
-  systemType: 'Website',
+  systemType: autoProjectType,
   designType: 'Minimal',
   industry: '',
   audience: '',
@@ -157,8 +158,10 @@ async function readHistoryFiles(directoryHandle: any): Promise<SavedGeneration[]
 }
 
 function buildBriefPrompt(brief: DesignBrief) {
+  const isAutoProjectType = brief.systemType === autoProjectType;
   return [
-    `System type: ${brief.systemType}`,
+    `Project type: ${brief.systemType}`,
+    `Project type rule: ${isAutoProjectType ? 'Auto-detect the interface type from the uploaded image when present, otherwise infer it from the written brief.' : 'Use this as project context only. If an uploaded image conflicts with it, keep the uploaded layout structure.'}`,
     `Design type: ${brief.designType}`,
     `Industry/use case: ${brief.industry || 'Not specified'}`,
     `Target audience: ${brief.audience || 'Not specified'}`,
@@ -181,7 +184,8 @@ function titleCase(value: string) {
 }
 
 function derivePreviewContent(brief: DesignBrief, previewCopy: PreviewCopy = {}): PreviewContent {
-  const useCase = brief.industry.trim() || `${brief.systemType} concept`;
+  const projectType = brief.systemType === autoProjectType ? 'Detected Project' : brief.systemType;
+  const useCase = brief.industry.trim() || `${projectType} concept`;
   const audience = brief.audience.trim() || 'your target users';
   const mood = brief.mood.trim() || brief.designType.toLowerCase();
   const brandName = titleCase(useCase.replace(/\b(platform|system|website|web|app|application|dashboard|landing|page)\b/gi, '').trim()) || 'Your Project';
@@ -191,7 +195,7 @@ function derivePreviewContent(brief: DesignBrief, previewCopy: PreviewCopy = {})
   return {
     brandName: copyBrandName,
     initial: copyBrandName.charAt(0).toUpperCase(),
-    systemType: brief.systemType,
+    systemType: projectType,
     designType: brief.designType,
     useCase,
     audience,
@@ -201,7 +205,7 @@ function derivePreviewContent(brief: DesignBrief, previewCopy: PreviewCopy = {})
     cardTitles: previewCopy.cardTitles?.length ? previewCopy.cardTitles : [
       `${brief.designType} direction`,
       `${mood} concept`,
-      `${brief.systemType} option`,
+      `${projectType} option`,
     ],
     statLabels: previewCopy.statLabels?.length ? previewCopy.statLabels : ['Styles', 'Screens', 'Saved'],
     navItems: previewCopy.navItems?.length ? previewCopy.navItems : ['Overview', 'Details', 'Reserve'],
@@ -210,7 +214,7 @@ function derivePreviewContent(brief: DesignBrief, previewCopy: PreviewCopy = {})
     footerItems: previewCopy.footerItems?.length ? previewCopy.footerItems : ['Support', 'Privacy', 'Contact'],
     primaryAction: previewCopy.primaryAction || 'Primary action',
     secondaryAction: previewCopy.secondaryAction || 'Secondary',
-    heroTitle: previewCopy.heroTitle || `${brief.designType} ${brief.systemType}`,
+    heroTitle: previewCopy.heroTitle || `${brief.designType} ${projectType}`,
     heroDescription: previewCopy.heroDescription || `${useCase} preview for ${audience}.`,
   };
 }
@@ -762,11 +766,11 @@ export default function App() {
               <section>
                 <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>Design Brief</h3>
                 <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-zinc-400' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                  Describe the project. AI returns only palettes and fonts.
+                  Upload decides the layout. Project type only helps when no image is uploaded.
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className={`text-[10px] font-bold uppercase tracking-widest block mb-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>System</label>
+                    <label className={`text-[10px] font-bold uppercase tracking-widest block mb-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>Project Type</label>
                     <select
                       value={brief.systemType}
                       onChange={(event) => updateBrief('systemType', event.target.value)}

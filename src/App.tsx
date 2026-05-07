@@ -1459,15 +1459,6 @@ function getPreviewRhythm(previewStyle: PreviewStyle, aspect: PreviewCanvas['asp
   };
 }
 
-function getCanvasAspectRatio(previewStyle: PreviewStyle, aspect: PreviewCanvas['aspect']) {
-  if (aspect === 'mobile') return '9 / 16';
-  if (aspect === 'square') return '1 / 1';
-  if (previewStyle.layoutPattern === 'dashboard' || previewStyle.navigationStyle === 'sidebar') return '16 / 9.5';
-  if (previewStyle.layoutPattern === 'marketplace' || previewStyle.componentTreatment === 'image-first') return '16 / 11.5';
-  if (previewStyle.layoutPattern === 'landing' || previewStyle.heroTreatment === 'centered' || previewStyle.backgroundTreatment === 'sectioned') return '16 / 12.5';
-  return '16 / 10.5';
-}
-
 function FreeformPreview({
   colors,
   font,
@@ -1494,7 +1485,7 @@ function FreeformPreview({
   const brandText = readableColor(calmBrand, colors.brandForeground);
   const rhythm = getPreviewRhythm(previewStyle, previewCanvas.aspect);
   const radius = rhythm.frameRadius;
-  const canvasAspectRatio = getCanvasAspectRatio(previewStyle, previewCanvas.aspect);
+  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16]' : previewCanvas.aspect === 'square' ? 'aspect-square' : 'aspect-[16/10]';
   const canvasWidth = previewCanvas.aspect === 'mobile'
     ? 'min(100%, 380px)'
     : previewCanvas.aspect === 'square'
@@ -1515,10 +1506,9 @@ function FreeformPreview({
       }}
     >
       <div
-        className="relative mx-auto overflow-hidden"
+        className={`relative mx-auto overflow-hidden ${aspectClass}`}
         style={{
           width: canvasWidth,
-          aspectRatio: canvasAspectRatio,
           minWidth: previewCanvas.aspect === 'mobile' ? 220 : 280,
           backgroundColor: displayBg,
           border: rhythm.borderWidth ? `${rhythm.borderWidth}px solid ${displayBorder}` : undefined,

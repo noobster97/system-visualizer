@@ -218,7 +218,7 @@ function normalizePreviewItems(items: unknown): PreviewItem[] {
       };
     })
     .filter((item): item is PreviewItem => Boolean(item))
-    .slice(0, 100);
+    .slice(0, 140);
 }
 
 function normalizeGeneration(raw: unknown): DesignGeneration {
@@ -329,6 +329,10 @@ function normalizeGeneration(raw: unknown): DesignGeneration {
     aspect: allowedBlockValues.canvasAspect.includes(source.previewCanvas?.aspect as PreviewCanvas['aspect']) ? source.previewCanvas?.aspect as PreviewCanvas['aspect'] : 'desktop',
     items: normalizePreviewItems(source.previewCanvas?.items),
   };
+
+  if (previewCanvas.items.length < 24) {
+    throw new Error('AI returned an incomplete preview. Please generate again.');
+  }
 
   return { palettes, components: finalComponents.length ? finalComponents : defaultComponents, previewCopy, previewStyle, previewBlocks: normalizedBlocks, previewCanvas };
 }
@@ -503,7 +507,7 @@ export async function generateDesignPalettes({ apiKey, provider, model, userInte
     throw new Error(`Enter your ${providerDefaults[provider].label} API key before generating.`);
   }
 
-  const safeIntent = userIntent.trim().slice(0, 1800);
+  const safeIntent = userIntent.trim().slice(0, 2600);
   const referenceMode = image
     ? `An uploaded image is attached. Use that image as the primary source for previewCanvas layout. The written prompt only clarifies audience, mood, palette direction, font direction, and safe generic labels. Do not use a system-type template as the layout when an image exists.`
     : `No uploaded image is attached. Use the written brief to detect the interface type and create a suitable previewCanvas layout, using the template guidance below only as planning support.`;
@@ -529,6 +533,8 @@ Rules:
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
 - previewCopy and components must be specific to the user request. Avoid generic labels like "Feature Cards", "Primary Flow", "First row", "Project Name", "Overview" unless the uploaded image or prompt really calls for them.
+- Return all required details in one complete JSON object: exactly 10 palettes, previewStyle, previewCopy, components, and a detailed previewCanvas. The app does not call you again to fill missing preview details.
+- Only fields listed in the JSON schema below will be displayed. Do not invent extra fields for layout details, because the app will ignore them.
 - The selected Project type is context only. If it is "Auto-detect from upload", infer the interface type from the uploaded image when present, otherwise infer it from the written brief. The previewCanvas decides the visible layout. It should be a controlled look-a-like of the uploaded image when one is provided, otherwise a prompt-based mockup using primitive UI shapes. The app renders previewCanvas directly when enough items are returned.
 - Treat the preview as a detailed product mockup: use previewCanvas to represent realistic navigation, hero/content sections, cards, tables, forms, product/reservation modules, and footer/support areas when relevant.
 - Brief-mode architecture guidance for NO-UPLOAD requests only. If an uploaded image is provided, do not follow this list as the layout template; follow the uploaded image structure instead. For brief mode, use this as a checklist of important UI areas to include when the written use case implies them:
@@ -548,7 +554,7 @@ Rules:
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and detected or selected Project type.
 - Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be complete enough to stand alone, because the app should not invent the layout after your response. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
-  items: 36 to 100 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the real page structure without copying exact text or logos. Prefer 60 to 90 items for detailed desktop/dashboard/screenshot mockups, 45 to 70 items for landing/marketplace/screens with repeated cards, and 30 to 55 items for mobile/simple screens. Each item uses:
+  items: 36 to 140 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the real page structure without copying exact text or logos. Prefer 70 to 120 items for detailed desktop/dashboard/screenshot mockups, 55 to 90 items for landing/marketplace/screens with repeated cards, and 32 to 60 items for mobile/simple screens. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider
     x, y, w, h: numbers from 0 to 100 as percentages inside the whole canvas
     tone: brand, surface, muted, contrast, text
@@ -561,6 +567,7 @@ Rules:
     blur: optional boolean for soft decorative/media wash only
 - previewCanvas quality rules:
   Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
+  Completeness check: previewCanvas must include the visible layout skeleton, important sections, repeated groups, primary controls, content areas, and bottom/footer areas when relevant. Do not return only palette names, fonts, and a few sample cards.
   Do a pairwise overlap check for all readable heading, text, button, and labeled box items. If two readable labels overlap or compete visually, move one, enlarge its parent region, shorten its label, reduce its textSize one step, or replace secondary detail with line/divider primitives.
   Do a final viewport-fit check at desktop width: all important text, controls, cards, and bottom sections must be visible inside the 0-100 canvas without accidental clipping, stacking, or horizontal overflow.
   When copying screenshot-like structure, use fewer readable labels and more line/media/box primitives for dense repeated content. Readable text should be reserved for key nav/hero/actions/card names only.

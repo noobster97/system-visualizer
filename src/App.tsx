@@ -1407,7 +1407,15 @@ function preparePreviewItems(items: PreviewItem[]) {
       if (item.kind === 'box' || item.kind === 'media' || item.kind === 'avatar') {
         return [{ item: { ...item, label: undefined }, rect, readable: false }];
       }
-      return [];
+      const fallbackKind = item.kind === 'button' ? 'button' : 'line';
+      const fallbackItem: PreviewItem = {
+        ...item,
+        kind: fallbackKind,
+        label: undefined,
+        h: fallbackKind === 'line' ? Math.min(rect.h, 1.2) : item.h,
+        opacity: Math.min(item.opacity ?? 0.58, 0.58),
+      };
+      return [{ item: fallbackItem, rect: clampCanvasRect(fallbackItem), readable: false }];
     }
 
     const prepared = { item, rect, readable };

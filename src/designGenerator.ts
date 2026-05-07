@@ -517,6 +517,9 @@ Reference mode:
 ${referenceMode}
 
 Rules:
+- Read "Input mode" in the user design intent carefully:
+  From Screenshot means the attached image is required and must drive previewCanvas layout, component placement, density, and visual hierarchy. Written fields are only context for palette, font, mood, audience, and safe generic labels.
+  From Brief means there is no screenshot driving layout, so the written project type/use case/design style must drive previewCanvas.
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
@@ -535,7 +538,7 @@ Rules:
 - If an uploaded image is provided, use it as the primary reference for what the mockup should represent: infer the screen type, main UI regions, component emphasis, density, spacing rhythm, and likely content categories. Do not display or copy the uploaded image itself.
 - If an uploaded image is provided, previewCanvas must feel like a simplified clone of the uploaded UI structure: same broad layout, same major region placement, similar component density, similar spacing rhythm, and similar visual hierarchy. Apply new palette/font choices to that structure.
 - If an uploaded image is provided, infer component/content labels from its UI type and visual structure, but do not copy exact text, names, logos, faces, private data, or unique identifiers. Rewrite into generic labels that match the user's project and detected or selected Project type.
-- Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
+- Return previewCanvas as the primary controlled layout preview. This is REQUIRED and the app renders it directly. It must be complete enough to stand alone, because the app should not invent the layout after your response. It must be a safe look-a-like of the uploaded screenshot or prompt layout, not a generic template:
   aspect: desktop, mobile, square
   items: 24 to 70 positioned primitive shapes across the whole preview canvas. Use enough primitives to express the page structure without copying exact text or logos. Prefer 36 to 60 items for detailed desktop/dashboard mockups and 24 to 42 items for mobile/simple screens. Each item uses:
     kind: box, line, heading, text, media, button, avatar, divider

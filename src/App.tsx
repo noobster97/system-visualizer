@@ -35,10 +35,13 @@ type DesignBrief = {
   notes: string;
 };
 
+type InputMode = 'screenshot' | 'brief';
+
 type SavedGeneration = {
   id: string;
   createdAt: string;
   intent: string;
+  inputMode?: InputMode;
   brief?: DesignBrief;
   imageName?: string;
   palettes: Palette[];
@@ -157,11 +160,14 @@ async function readHistoryFiles(directoryHandle: any): Promise<SavedGeneration[]
   }
 }
 
-function buildBriefPrompt(brief: DesignBrief) {
+function buildBriefPrompt(brief: DesignBrief, inputMode: InputMode, hasUploadedImage: boolean) {
   const isAutoProjectType = brief.systemType === autoProjectType;
+  const modeLabel = inputMode === 'screenshot' ? 'From Screenshot' : 'From Brief';
   return [
-    `Project type: ${brief.systemType}`,
-    `Project type rule: ${isAutoProjectType ? 'Auto-detect the interface type from the uploaded image when present, otherwise infer it from the written brief.' : 'Use this as project context only. If an uploaded image conflicts with it, keep the uploaded layout structure.'}`,
+    `Input mode: ${modeLabel}`,
+    `Uploaded screenshot provided: ${hasUploadedImage ? 'Yes' : 'No'}`,
+    `Project type: ${inputMode === 'screenshot' ? autoProjectType : brief.systemType}`,
+    `Project type rule: ${inputMode === 'screenshot' ? 'Auto-detect the interface type and layout from the uploaded image. Do not ask the user for project type in this mode.' : isAutoProjectType ? 'Auto-detect the interface type from the written brief.' : 'Use this as the main structure guide when no image is uploaded.'}`,
     `Design type: ${brief.designType}`,
     `Industry/use case: ${brief.industry || 'Not specified'}`,
     `Target audience: ${brief.audience || 'Not specified'}`,
@@ -255,6 +261,7 @@ export default function App() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [folderHandle, setFolderHandle] = useState<any | null>(null);
   const [folderName, setFolderName] = useState('');
+  const [inputMode, setInputMode] = useState<InputMode>('screenshot');
   const [brief, setBrief] = useState<DesignBrief>(emptyBrief);
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [palettes, setPalettes] = useState<Palette[]>([]);
@@ -283,7 +290,7 @@ export default function App() {
 
   const colors = isDark ? selectedPalette.colors.dark : selectedPalette.colors.light;
   const hasGenerated = palettes.length > 0;
-  const currentBriefPrompt = buildBriefPrompt(brief);
+  const currentBriefPrompt = buildBriefPrompt(brief, inputMode, Boolean(uploadedImage));
   const isFolderPickerSupported = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
   const cooldownRemaining = Math.max(0, Math.ceil((nextGenerateAt - now) / 1000));
   const isGenerateBlocked = isGenerating || cooldownRemaining > 0;
@@ -313,6 +320,13 @@ export default function App() {
 
   const updateBrief = (key: keyof DesignBrief, value: string) => {
     setBrief((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateInputMode = (mode: InputMode) => {
+    setInputMode(mode);
+    if (mode === 'screenshot') {
+      setBrief((current) => ({ ...current, systemType: autoProjectType }));
+    }
   };
 
   const loadModels = async () => {
@@ -426,7 +440,12 @@ export default function App() {
       return;
     }
 
-    if (!briefHasInput(brief) && !uploadedImage) {
+    if (inputMode === 'screenshot' && !uploadedImage) {
+      setError('Upload a screenshot first. This mode uses the uploaded UI as the preview layout reference.');
+      return;
+    }
+
+    if (inputMode === 'brief' && !briefHasInput(brief)) {
       setError('Add at least one brief detail or upload a photo/screenshot first.');
       return;
     }
@@ -441,7 +460,7 @@ export default function App() {
         provider: aiProvider,
         model: aiModel,
         userIntent: currentBriefPrompt,
-        image: uploadedImage ? { mimeType: uploadedImage.mimeType, data: uploadedImage.data } : undefined,
+        image: inputMode === 'screenshot' && uploadedImage ? { mimeType: uploadedImage.mimeType, data: uploadedImage.data } : undefined,
       });
       setPalettes(generation.palettes);
       setPreviewComponents(generation.components);
@@ -510,8 +529,9 @@ export default function App() {
       id: `history-${Date.now()}`,
       createdAt: new Date().toISOString(),
       intent: currentBriefPrompt,
+      inputMode,
       brief,
-      imageName: uploadedImage?.name,
+      imageName: inputMode === 'screenshot' ? uploadedImage?.name : undefined,
       palettes: nextPalettes,
       components: nextComponents,
       previewCopy: nextPreviewCopy,
@@ -766,10 +786,33 @@ export default function App() {
               <section>
                 <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>Design Brief</h3>
                 <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-zinc-400' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                  Upload decides the layout. Project type only helps when no image is uploaded.
+                  Choose how AI should understand the layout. It still returns only palettes, fonts, and a preview mockup.
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
+                <div className={`mb-3 grid grid-cols-2 rounded-lg p-1 ${isDark ? 'bg-zinc-950 border border-zinc-800' : 'bg-slate-100 border border-slate-200'}`}>
+                  <button
+                    type="button"
+                    onClick={() => updateInputMode('screenshot')}
+                    className={`rounded-md py-2 text-[10px] font-bold uppercase tracking-widest ${inputMode === 'screenshot' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-slate-900 shadow-sm') : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-800')}`}
+                  >
+                    From Screenshot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateInputMode('brief')}
+                    className={`rounded-md py-2 text-[10px] font-bold uppercase tracking-widest ${inputMode === 'brief' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-white text-slate-900 shadow-sm') : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-800')}`}
+                  >
+                    From Brief
+                  </button>
+                </div>
+
+                {inputMode === 'screenshot' && (
+                  <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-violet-500/20 bg-violet-500/10 text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-800'}`}>
+                    Upload is required. AI detects the layout from the screenshot; the fields below only guide palette, fonts, audience, and mood.
+                  </div>
+                )}
+
+                {inputMode === 'brief' && (
+                  <div className="mb-3">
                     <label className={`text-[10px] font-bold uppercase tracking-widest block mb-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>Project Type</label>
                     <select
                       value={brief.systemType}
@@ -779,6 +822,9 @@ export default function App() {
                       {systemTypes.map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
                   </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className={`text-[10px] font-bold uppercase tracking-widest block mb-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>Design</label>
                     <select
@@ -795,7 +841,7 @@ export default function App() {
                   <input
                     value={brief.industry}
                     onChange={(event) => updateBrief('industry', event.target.value)}
-                    placeholder="What is it for? e.g. restaurant reservation app"
+                    placeholder={inputMode === 'screenshot' ? 'Optional context e.g. restaurant reservation app' : 'What is it for? e.g. restaurant reservation app'}
                     className={`w-full text-sm px-3 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'}`}
                   />
                   <input
@@ -818,15 +864,17 @@ export default function App() {
                   />
                 </div>
 
-                <div className="mt-3">
-                  <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-lg border border-dashed text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors ${isDark ? 'border-zinc-700 hover:border-zinc-500 bg-zinc-900/70 text-zinc-300' : 'border-slate-300 hover:border-slate-400 bg-slate-50 text-slate-600'}`}>
-                    <Upload className="w-4 h-4" />
-                    Upload Photo or Screenshot
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                </div>
+                {inputMode === 'screenshot' && (
+                  <div className="mt-3">
+                    <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-lg border border-dashed text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors ${isDark ? 'border-zinc-700 hover:border-zinc-500 bg-zinc-900/70 text-zinc-300' : 'border-slate-300 hover:border-slate-400 bg-slate-50 text-slate-600'}`}>
+                      <Upload className="w-4 h-4" />
+                      Upload Screenshot
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                )}
 
-                {uploadedImage && (
+                {inputMode === 'screenshot' && uploadedImage && (
                   <div className={`mt-3 flex items-center gap-3 rounded-lg border p-2 ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
                     <img src={uploadedImage.previewUrl} alt="" className="h-12 w-16 object-cover rounded-md border border-black/10" />
                     <div className="min-w-0 flex-1">

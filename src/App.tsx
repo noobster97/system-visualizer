@@ -1333,14 +1333,16 @@ function clampCanvasRect(item: PreviewItem) {
 }
 
 function getCanvasTextSize(rect: ReturnType<typeof clampCanvasRect>, kind: 'heading' | 'text' | 'button' | 'label', requested?: PreviewItem['textSize']) {
-  const base = kind === 'heading'
-    ? Math.max(7, Math.min(34, rect.h * 1.85, rect.w * 0.5))
-    : kind === 'text'
-      ? Math.max(6, Math.min(16, rect.h * 1.35, rect.w * 0.36))
-      : Math.max(6, Math.min(14, rect.h * 1.25, rect.w * 0.42));
-  const scale = requested === 'xs' ? 0.72 : requested === 'sm' ? 0.86 : requested === 'lg' ? 1.18 : requested === 'xl' ? 1.38 : 1;
-  const maxByKind = kind === 'heading' ? 40 : kind === 'text' ? 18 : 15;
-  return Math.max(6, Math.min(maxByKind, base * scale));
+  const sizeKey = requested || 'md';
+  const sizeMap = {
+    heading: { xs: 14, sm: 18, md: 24, lg: 32, xl: 40 },
+    text: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
+    button: { xs: 10, sm: 11, md: 12.5, lg: 14, xl: 16 },
+    label: { xs: 10, sm: 11, md: 12, lg: 14, xl: 16 },
+  } as const;
+  const preferred = sizeMap[kind][sizeKey];
+  const cramped = rect.w < (kind === 'heading' ? 10 : 7) || rect.h < (kind === 'heading' ? 4 : 2.4);
+  return cramped ? Math.max(9, preferred * 0.82) : preferred;
 }
 
 function previewItemLayer(item: PreviewItem) {
@@ -1404,10 +1406,10 @@ function FreeformPreview({
   const radius = rhythm.frameRadius;
   const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16]' : previewCanvas.aspect === 'square' ? 'aspect-square' : 'aspect-[16/10]';
   const canvasWidth = previewCanvas.aspect === 'mobile'
-    ? 'min(100%, 380px, calc((100dvh - 210px) * 0.5625))'
+    ? 'min(100%, 380px)'
     : previewCanvas.aspect === 'square'
-      ? 'min(100%, 760px, calc(100dvh - 160px))'
-      : 'min(100%, 1180px, calc((100dvh - 160px) * 1.6))';
+      ? 'min(100%, 860px)'
+      : 'min(100%, 1280px)';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
 
@@ -1468,19 +1470,8 @@ function FreeformPreview({
           };
 
           if (item.kind === 'heading' || item.kind === 'text') {
-            const hasRoomForText = rect.w >= (item.kind === 'heading' ? 9 : 7) && rect.h >= (item.kind === 'heading' ? 3.6 : 2.1);
             const textSize = getCanvasTextSize(rect, item.kind, item.textSize);
-            const lineCount = rect.h >= (item.kind === 'heading' ? 8 : 5) && rect.w >= 12 ? 2 : 1;
-
-            if (!hasRoomForText) {
-              return (
-                <div
-                  key={`${item.kind}-${index}`}
-                  className="absolute"
-                  style={{ ...commonStyle, height: `${Math.min(rect.h, 1.2)}%`, backgroundColor: item.kind === 'heading' ? displayText : displayMuted, borderRadius: 999, opacity: Math.min(opacity, 0.48) }}
-                />
-              );
-            }
+            const lineCount = rect.h >= (item.kind === 'heading' ? 9 : 6) && rect.w >= 12 ? 2 : 1;
 
             return (
               <div

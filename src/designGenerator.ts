@@ -523,7 +523,7 @@ Rules:
   From Screenshot means the attached image is required and must drive previewCanvas layout, component placement, density, and visual hierarchy. Written fields are only context for palette, font, mood, audience, and safe generic labels.
   From Brief means there is no screenshot driving layout, so the written project type/use case/design style must drive previewCanvas.
 - For Screenshot mode, first internally identify the uploaded UI's layout inventory before writing JSON: canvas aspect, header/sidebar/footer positions, hero/media regions, search/filter controls, card/table/form groups, repeated component patterns, empty states, major whitespace, and any intentional overlays. Then convert that inventory into previewCanvas primitives.
-- The frontend will not repair, reposition, de-overlap, or redesign your previewCanvas. It renders your coordinates as the source of truth. You must do the layout QA yourself before returning JSON.
+- The frontend renders your previewCanvas directly and only clips overflow for safety. It will not redesign the composition, so your coordinates, sizes, labels, and hierarchy are the source of truth.
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
@@ -550,7 +550,7 @@ Rules:
     tone: brand, surface, muted, contrast, text
     radius: none, soft, round
     label: optional short generic text for heading, text, button, or avatar items. Do not copy exact uploaded wording, names, private data, or logos.
-    textSize: optional xs, sm, md, lg, xl. Use this to control text hierarchy from the uploaded UI or prompt. Large hero text can be lg/xl only when its box has enough room; compact card/table text should usually be xs/sm/md.
+    textSize: optional xs, sm, md, lg, xl. Use this to control text hierarchy from the uploaded UI or prompt. Desktop previews should not make important headings, buttons, and card labels tiny. If a section needs to feel compact, scale the related blocks, controls, and labels together instead of shrinking only the text.
     emphasis: low, normal, high
     shadow: none, soft, strong
     opacity: optional number from 0.08 to 1
@@ -561,7 +561,7 @@ Rules:
   Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards.
   Do not leave large accidental blank areas unless the uploaded image or requested design clearly has that whitespace. If the original has dense content, the previewCanvas should also look dense.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
-  You control text hierarchy with textSize. Do not rely on the frontend to shrink oversized text. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
+  You control text hierarchy with textSize. Use readable default sizes for desktop and large-screen previews. Do not overuse xs/sm for important content. If textSize is lg/xl, the x/y/w/h box must be large enough for it.
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
   If the uploaded UI has overlays, represent them intentionally with enough contrast and room; do not accidentally stack unrelated labels, buttons, cards, or form fields.
@@ -569,6 +569,7 @@ Rules:
   Keep readable text inside its visual parent and at least 2% away from the canvas edge unless it is a deliberate full-bleed navigation or footer label.
   Dense repeated text from the screenshot should usually become line/divider primitives, not many readable labels.
   Give readable labels enough width and height. If an element is too small for text, use line, divider, box, or media primitives instead of a readable label.
+  If many controls/cards must fit, reduce the entire group proportionally with consistent gutters; do not leave full-size blocks with unreadably small labels.
   Preserve visual breathing room around edges, keep footer or bottom navigation visible when relevant, and avoid placing important text directly over busy media.
   If you cannot confidently represent detailed text without collisions, use non-readable line primitives inside cards instead of heading/text labels.
 - Return previewBlocks as optional category metadata for template hints. Prefer 4 to 6 blocks when the system type naturally has multiple sections. previewBlocks are not used to fully arrange the preview. Use only:

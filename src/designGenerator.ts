@@ -100,6 +100,12 @@ function contrastRatio(a: string, b: string) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+function colorDistance(a: string, b: string) {
+  const first = hexToRgb(a);
+  const second = hexToRgb(b);
+  return Math.sqrt((first.r - second.r) ** 2 + (first.g - second.g) ** 2 + (first.b - second.b) ** 2);
+}
+
 function readableOn(hex: string, current: string) {
   if (contrastRatio(hex, current) >= 4.5) return current;
   return contrastRatio(hex, '#FFFFFF') >= contrastRatio(hex, '#0F172A') ? '#FFFFFF' : '#0F172A';
@@ -119,7 +125,7 @@ function normalizePaletteValues(values: PaletteValues, mode: 'light' | 'dark'): 
 
   normalized.brandForeground = readableOn(normalized.brand, normalized.brandForeground);
 
-  if (mode === 'dark' && luminance(normalized.bg) > 0.28) {
+  if (mode === 'dark' && (luminance(normalized.bg) > 0.28 || colorDistance(normalized.bg, normalized.brand) < 80)) {
     return {
       ...normalized,
       bg: '#070A12',
@@ -143,6 +149,22 @@ function normalizePaletteValues(values: PaletteValues, mode: 'light' | 'dark'): 
       textMuted: '#64748B',
       border: '#E2E8F0',
     };
+  }
+
+  if (contrastRatio(normalized.bg, normalized.surface) < 1.12 || contrastRatio(normalized.surface, normalized.surfaceHighlight) < 1.08) {
+    return mode === 'dark'
+      ? {
+        ...normalized,
+        surface: '#101624',
+        surfaceHighlight: '#1B2538',
+        border: '#243047',
+      }
+      : {
+        ...normalized,
+        surface: '#FFFFFF',
+        surfaceHighlight: '#F1F5F9',
+        border: '#E2E8F0',
+      };
   }
 
   return normalized;
@@ -521,6 +543,7 @@ export async function generateDesignPalettes({ apiKey, provider, model, userInte
   const instruction = `You are the generation engine for Design Palette Visualizer.
 
 The product has exactly one allowed job: generate 10 professional color palette and font-pair options for previewing how a user's system could look.
+The output must make the referenced or described UI feel more beautiful, polished, creative, and professionally usable. Never make the UI look cheaper, noisier, flatter, harder to read, or more chaotic than the uploaded/reference layout.
 
 User design intent:
 ${safeIntent || 'No written intent provided. Use the uploaded image if present, otherwise create versatile modern SaaS directions.'}
@@ -624,6 +647,10 @@ Rules:
 - Act like a senior product UI designer creating production-ready palette systems, not decorative mood boards.
 - Each palette must feel cohesive, professional, and usable for interface design: balanced neutrals, one clear brand color, readable text, subtle borders, and a useful highlight surface.
 - Avoid random bright combinations, muddy low-contrast sets, one-note palettes, and brand colors that clash with their foreground.
+- Palette application must improve the UI. Use neutrals for page backgrounds, cards, input fields, and large content regions. Use brand color for primary actions, selected states, small badges, key accents, and limited hero/highlight areas.
+- Do not flood the whole preview with the same hue family. Dark themes must not become all-purple/all-blue/all-pink unless the original UI is intentionally monochrome and still has clear surface separation.
+- Large surfaces must have calm bg/surface/surfaceHighlight separation. Cards, inputs, and search bars must remain visually distinct from the page background.
+- If a palette direction is playful, futuristic, luxury, or expressive, keep it controlled: strong accents are allowed, but core UI surfaces must stay readable and professionally balanced.
 - Make the 10 options meaningfully different design directions while still matching the same user intent or uploaded reference.
 - Font pairs must match the project mood and audience. Use display fonts only when appropriate; keep body fonts highly readable.
 - For no-upload requests, the chosen preview structure must look suitable for the requested system type. For upload requests, the uploaded image structure wins and previewStyle should adapt that structure to the user's prompt and generated palette/font direction.
@@ -649,6 +676,7 @@ Rules:
 - Do not always use the same previewCanvas. Different uploads/prompts must produce visibly different item positions and composition.
 - Do not return sparse placeholder mockups. The previewCanvas must look like a real UI screen using the generated palette and fonts, with enough detail for the user to judge whether the palette/font direction fits their actual project.
 - Do not apply the brand color to every component. Choose a realistic mix of brand areas, neutral surfaces, soft bands, and contrast accents.
+- In previewCanvas, tone "brand" should usually be less than 18% of the canvas area. Use "surface" and "muted" for most layout structure. Reserve "brand" for CTAs, active chips, selected states, small accent bars, and one intentional feature area when appropriate.
 - Use only valid 6-digit hex colors.
 - Keep light themes readable on light backgrounds and dark themes readable on dark backgrounds.
 - Light and dark themes must not look like simple copies. Light mode should feel open, bright, and high contrast. Dark mode should use deep backgrounds, lifted surfaces, softer borders, and adjusted brand accents that still match the same palette mood.

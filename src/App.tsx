@@ -1391,34 +1391,45 @@ function getOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<ty
 function preparePreviewItems(items: PreviewItem[]) {
   const structural = [...items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
   const acceptedReadable: PreparedPreviewItem[] = [];
+  let brandArea = 0;
 
   return structural.flatMap((item): PreparedPreviewItem[] => {
     const rect = clampCanvasRect(item);
-    const readable = isReadableCanvasItem(item);
-    if (!readable) return [{ item, rect, readable }];
+    const area = rect.w * rect.h;
+    let displayItem = item;
+    if (item.tone === 'brand' && item.kind !== 'button' && item.kind !== 'avatar') {
+      const overusedBrand = brandArea > 950 || area > 1600;
+      if (overusedBrand) {
+        displayItem = { ...item, tone: item.kind === 'heading' || item.kind === 'text' ? 'text' : 'muted' };
+      } else {
+        brandArea += area;
+      }
+    }
+    const readable = isReadableCanvasItem(displayItem);
+    if (!readable) return [{ item: displayItem, rect, readable }];
 
-    const priority = getReadablePriority(item);
+    const priority = getReadablePriority(displayItem);
     const collision = acceptedReadable.some((accepted) => {
       const acceptedPriority = getReadablePriority(accepted.item);
       return priority <= acceptedPriority && getOverlapRatio(rect, accepted.rect) > 0.28;
     });
 
     if (collision) {
-      if (item.kind === 'box' || item.kind === 'media' || item.kind === 'avatar') {
-        return [{ item: { ...item, label: undefined }, rect, readable: false }];
+      if (displayItem.kind === 'box' || displayItem.kind === 'media' || displayItem.kind === 'avatar') {
+        return [{ item: { ...displayItem, label: undefined }, rect, readable: false }];
       }
-      const fallbackKind = item.kind === 'button' ? 'button' : 'line';
+      const fallbackKind = displayItem.kind === 'button' ? 'button' : 'line';
       const fallbackItem: PreviewItem = {
-        ...item,
+        ...displayItem,
         kind: fallbackKind,
         label: undefined,
-        h: fallbackKind === 'line' ? Math.min(rect.h, 1.2) : item.h,
-        opacity: Math.min(item.opacity ?? 0.58, 0.58),
+        h: fallbackKind === 'line' ? Math.min(rect.h, 1.2) : displayItem.h,
+        opacity: Math.min(displayItem.opacity ?? 0.58, 0.58),
       };
       return [{ item: fallbackItem, rect: clampCanvasRect(fallbackItem), readable: false }];
     }
 
-    const prepared = { item, rect, readable };
+    const prepared = { item: displayItem, rect, readable };
     acceptedReadable.push(prepared);
     return [prepared];
   });

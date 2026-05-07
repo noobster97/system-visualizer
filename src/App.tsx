@@ -1007,7 +1007,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col overflow-hidden relative z-[1] min-h-0">
+        <div className="flex-1 w-full max-w-6xl mx-auto flex flex-col overflow-hidden relative z-[1] min-h-0">
           {hasGenerated ? (
             <PaletteShowcase
               palettes={palettes}
@@ -1455,10 +1455,10 @@ function FreeformPreview({
   const radius = rhythm.frameRadius;
   const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16]' : previewCanvas.aspect === 'square' ? 'aspect-square' : 'aspect-[16/10]';
   const canvasWidth = previewCanvas.aspect === 'mobile'
-    ? 'min(100%, 340px, calc((100dvh - 210px) * 0.5625))'
+    ? 'min(100%, 380px, calc((100dvh - 210px) * 0.5625))'
     : previewCanvas.aspect === 'square'
-      ? 'min(100%, 600px, calc(100dvh - 210px))'
-      : 'min(100%, 960px, calc((100dvh - 210px) * 1.6))';
+      ? 'min(100%, 760px, calc(100dvh - 160px))'
+      : 'min(100%, 1180px, calc((100dvh - 160px) * 1.6))';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
   const readableRects: Array<ReturnType<typeof clampCanvasRect>> = [];
@@ -1539,7 +1539,7 @@ function FreeformPreview({
               <div
                 key={`${item.kind}-${index}`}
                 className="absolute flex items-center overflow-hidden break-words leading-tight"
-                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(8px, 1.2vw, 26px)' : 'clamp(6px, 0.72vw, 12px)' }}
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(9px, 1.35vw, 34px)' : 'clamp(7px, 0.82vw, 15px)' }}
               >
                 <span className="line-clamp-2">{item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}</span>
               </div>
@@ -1554,7 +1554,7 @@ function FreeformPreview({
             const canShowButtonLabel = rect.w >= 7 && rect.h >= 3 && !hasTextCollision;
             if (canShowButtonLabel) readableRects.push(rect);
             return (
-              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px]" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
+              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px] lg:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
                 {canShowButtonLabel ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
               </div>
             );
@@ -1578,7 +1578,7 @@ function FreeformPreview({
           return (
             <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
               {item.label && rect.h > 4 && rect.w > 10 && (
-                <span className="absolute left-2 top-1.5 max-w-[85%] truncate text-[8px] font-bold sm:left-3 sm:top-2 sm:text-[10px]" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
+                <span className="absolute left-2 top-1.5 max-w-[85%] truncate text-[8px] font-bold sm:left-3 sm:top-2 sm:text-[10px] lg:text-xs" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
               )}
             </div>
           );
@@ -1743,7 +1743,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </div>
         </div>
       ) : templateType === 'dashboard' ? (
-        <div className="mx-auto grid max-w-5xl gap-4 xl:grid-cols-[220px_1fr]" style={{ color: displayText }}>
+        <div className="mx-auto grid max-w-6xl gap-4 xl:grid-cols-[220px_1fr]" style={{ color: displayText }}>
           {show('header') && <aside className="hidden p-4 xl:block" style={brandStyle}>
             <div className="mb-8 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
@@ -1828,7 +1828,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </main>
         </div>
       ) : templateType === 'system' ? (
-        <div className="mx-auto grid max-w-5xl gap-4 xl:grid-cols-[200px_1fr_250px]" style={{ color: displayText }}>
+        <div className="mx-auto grid max-w-6xl gap-4 xl:grid-cols-[200px_1fr_250px]" style={{ color: displayText }}>
           {show('header') && <aside className="hidden p-4 xl:block" style={panelStyle}>
             <div className="mb-6 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl text-sm font-black" style={{ backgroundColor: calmBrand, color: brandText }}>{content.initial}</div>
@@ -1917,7 +1917,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </aside>}
         </div>
       ) : templateType === 'saas' ? (
-        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl text-sm font-black" style={{ backgroundColor: calmBrand, color: brandText }}>{content.initial}</div>
@@ -2012,7 +2012,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'commerce' ? (
-        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <strong style={{ fontFamily: font }}>{content.brandName}</strong>
             <nav className="flex gap-3 text-xs font-semibold" style={{ color: displayMuted }}>
@@ -2067,7 +2067,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'portfolio' ? (
-        <div className="mx-auto max-w-5xl" style={{ color: displayText }}>
+        <div className="mx-auto max-w-6xl" style={{ color: displayText }}>
           <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             {show('hero') && <div className="p-6 sm:p-8" style={panelStyle}>
               <p className="text-xs font-bold uppercase tracking-widest" style={{ color: colors.brand }}>{content.designType}</p>
@@ -2105,7 +2105,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : templateType === 'landing' ? (
-        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
           {show('hero') && <section className="min-h-[440px] p-5 sm:p-8" style={brandStyle}>
             {show('header') && <header className="mb-16 flex items-center justify-between">
               <strong style={{ fontFamily: font }}>{content.brandName}</strong>
@@ -2153,7 +2153,7 @@ function ImplementationPreview({ colors, font, content, previewStyle, components
           </footer>}
         </div>
       ) : (
-        <div className="mx-auto max-w-5xl overflow-hidden" style={panelStyle}>
+        <div className="mx-auto max-w-6xl overflow-hidden" style={panelStyle}>
           {show('header') && <header className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderBottom: `1px solid ${displayBorder}` }}>
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl" style={{ backgroundColor: calmBrand }} />

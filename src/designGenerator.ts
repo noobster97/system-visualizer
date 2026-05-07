@@ -521,6 +521,7 @@ Rules:
   From Screenshot means the attached image is required and must drive previewCanvas layout, component placement, density, and visual hierarchy. Written fields are only context for palette, font, mood, audience, and safe generic labels.
   From Brief means there is no screenshot driving layout, so the written project type/use case/design style must drive previewCanvas.
 - For Screenshot mode, first internally identify the uploaded UI's layout inventory before writing JSON: canvas aspect, header/sidebar/footer positions, hero/media regions, card/table/form groups, repeated component patterns, major whitespace, and any intentional overlays. Then convert that inventory into previewCanvas primitives.
+- The frontend will not repair, reposition, de-overlap, or redesign your previewCanvas. It renders your coordinates as the source of truth. You must do the layout QA yourself before returning JSON.
 - Return exactly 10 options.
 - Return 4 to 8 preview component names that match the selected system and prompt. These are user-facing component chips, not code. Examples: Top Navigation, Hero Showcase, Reservation Cards, Booking Form, Product Grid, Analytics Table, Client Queue, Footer Links.
 - Return previewCopy that represents the user's written prompt and uploaded image/reference in safe generic UI labels. This is REQUIRED because the app displays these labels directly in the mockup. Use it for brand/project label, hero title, short description, nav items, card titles, stats, rows, form fields, and footer labels.
@@ -552,6 +553,7 @@ Rules:
     opacity: optional number from 0.08 to 1
     blur: optional boolean for soft decorative/media wash only
 - previewCanvas quality rules:
+  Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
   Every item must stay fully inside the canvas: x + w <= 100 and y + h <= 100.
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
@@ -561,6 +563,7 @@ Rules:
   Dense repeated text from the screenshot should usually become line/divider primitives, not many readable labels.
   Give readable labels enough width and height. If an element is too small for text, use line, divider, box, or media primitives instead of a readable label.
   Preserve visual breathing room around edges, keep footer or bottom navigation visible when relevant, and avoid placing important text directly over busy media.
+  If you cannot confidently represent detailed text without collisions, use non-readable line primitives inside cards instead of heading/text labels.
 - Return previewBlocks as optional category metadata for template hints. Prefer 4 to 6 blocks when the system type naturally has multiple sections. previewBlocks are not used to fully arrange the preview. Use only:
   component: header, hero, cards, form, table, footer
   span: full, wide, half, third

@@ -1382,32 +1382,6 @@ function clampCanvasRect(item: PreviewItem) {
   };
 }
 
-type CanvasRect = ReturnType<typeof clampCanvasRect>;
-
-function constrainCanvasRect(rect: CanvasRect, inset = 0) {
-  const x = Math.min(100 - inset - Math.max(rect.w, 0.5), Math.max(inset, rect.x));
-  const y = Math.min(100 - inset - Math.max(rect.h, 0.5), Math.max(inset, rect.y));
-
-  return {
-    x,
-    y,
-    w: Math.min(rect.w, Math.max(0.5, 100 - inset - x)),
-    h: Math.min(rect.h, Math.max(0.5, 100 - inset - y)),
-  };
-}
-
-function rectOverlapRatio(a: CanvasRect, b: CanvasRect) {
-  const xOverlap = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
-  const yOverlap = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
-  const overlapArea = xOverlap * yOverlap;
-  const minArea = Math.max(0.1, Math.min(a.w * a.h, b.w * b.h));
-  return overlapArea / minArea;
-}
-
-function isReadablePreviewItem(item: PreviewItem) {
-  return item.kind === 'heading' || item.kind === 'text' || item.kind === 'button' || item.kind === 'avatar';
-}
-
 function previewItemLayer(item: PreviewItem) {
   if (item.kind === 'box' || item.kind === 'media') return 1;
   if (item.kind === 'line' || item.kind === 'divider') return 2;
@@ -1475,7 +1449,6 @@ function FreeformPreview({
       : 'min(100%, 1180px, calc((100dvh - 160px) * 1.6))';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
-  const readableRects: CanvasRect[] = [];
 
   return (
     <div
@@ -1510,10 +1483,7 @@ function FreeformPreview({
           }}
         />
         {visibleItems.map((item, index) => {
-          const rawRect = clampCanvasRect(item);
-          const rect = constrainCanvasRect(rawRect, isReadablePreviewItem(item) ? 2 : 0);
-          const readableItem = isReadablePreviewItem(item);
-          const hasTextCollision = readableItem && readableRects.some((existingRect) => rectOverlapRatio(rect, existingRect) > 0.22);
+          const rect = clampCanvasRect(item);
           const itemColor = getItemColor(item, colors, display);
           const itemRadius = item.radius === 'none' ? 0 : item.radius === 'round' ? 999 : Math.max(4, radius * rhythm.itemScale * (item.kind === 'button' ? 0.72 : 0.56));
           const opacity = item.opacity ?? (item.emphasis === 'low' ? 0.58 : item.emphasis === 'high' ? 1 : 0.86);
@@ -1539,7 +1509,7 @@ function FreeformPreview({
           if (item.kind === 'heading' || item.kind === 'text') {
             const hasRoomForText = rect.w >= (item.kind === 'heading' ? 9 : 7) && rect.h >= (item.kind === 'heading' ? 3.6 : 2.1);
 
-            if (!hasRoomForText || hasTextCollision) {
+            if (!hasRoomForText) {
               return (
                 <div
                   key={`${item.kind}-${index}`}
@@ -1549,7 +1519,6 @@ function FreeformPreview({
               );
             }
 
-            readableRects.push(rect);
             return (
               <div
                 key={`${item.kind}-${index}`}
@@ -1566,8 +1535,7 @@ function FreeformPreview({
           }
 
           if (item.kind === 'button') {
-            const canShowButtonLabel = rect.w >= 7 && rect.h >= 3 && !hasTextCollision;
-            if (canShowButtonLabel) readableRects.push(rect);
+            const canShowButtonLabel = rect.w >= 7 && rect.h >= 3;
             return (
               <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px] lg:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
                 {canShowButtonLabel ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
@@ -1585,8 +1553,7 @@ function FreeformPreview({
           }
 
           if (item.kind === 'avatar') {
-            const canShowAvatarLabel = rect.w >= 3 && rect.h >= 3 && !hasTextCollision;
-            if (canShowAvatarLabel) readableRects.push(rect);
+            const canShowAvatarLabel = rect.w >= 3 && rect.h >= 3;
             return <div key={`${item.kind}-${index}`} className="absolute grid place-items-center text-[9px] font-black sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>{canShowAvatarLabel ? item.label || content.initial : null}</div>;
           }
 

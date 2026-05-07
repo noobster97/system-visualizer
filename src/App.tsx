@@ -1382,7 +1382,21 @@ function clampCanvasRect(item: PreviewItem) {
   };
 }
 
-function rectOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<typeof clampCanvasRect>) {
+type CanvasRect = ReturnType<typeof clampCanvasRect>;
+
+function constrainCanvasRect(rect: CanvasRect, inset = 0) {
+  const x = Math.min(100 - inset - Math.max(rect.w, 0.5), Math.max(inset, rect.x));
+  const y = Math.min(100 - inset - Math.max(rect.h, 0.5), Math.max(inset, rect.y));
+
+  return {
+    x,
+    y,
+    w: Math.min(rect.w, Math.max(0.5, 100 - inset - x)),
+    h: Math.min(rect.h, Math.max(0.5, 100 - inset - y)),
+  };
+}
+
+function rectOverlapRatio(a: CanvasRect, b: CanvasRect) {
   const xOverlap = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
   const yOverlap = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
   const overlapArea = xOverlap * yOverlap;
@@ -1392,6 +1406,47 @@ function rectOverlapRatio(a: ReturnType<typeof clampCanvasRect>, b: ReturnType<t
 
 function isReadablePreviewItem(item: PreviewItem) {
   return item.kind === 'heading' || item.kind === 'text' || item.kind === 'button' || item.kind === 'avatar';
+}
+
+function shouldAvoidLayoutCollision(item: PreviewItem, rect: CanvasRect) {
+  if (item.kind === 'line' || item.kind === 'divider' || item.blur) return false;
+  if (rect.w > 84 || rect.h > 84 || rect.w * rect.h > 5200) return false;
+  return item.kind === 'box' || item.kind === 'media' || item.kind === 'button';
+}
+
+function avoidLayoutCollision(item: PreviewItem, rect: CanvasRect, placedRects: CanvasRect[]) {
+  const inset = isReadablePreviewItem(item) ? 2 : 0.8;
+  let next = constrainCanvasRect(rect, inset);
+  if (!shouldAvoidLayoutCollision(item, next)) return next;
+
+  for (const placed of placedRects) {
+    if (rectOverlapRatio(next, placed) < 0.18) continue;
+
+    const candidates = [
+      { ...next, x: placed.x + placed.w + 1.2 },
+      { ...next, x: placed.x - next.w - 1.2 },
+      { ...next, y: placed.y + placed.h + 1.2 },
+      { ...next, y: placed.y - next.h - 1.2 },
+      { ...next, x: next.x + 3.5, y: next.y + 2.5 },
+    ].map((candidate) => constrainCanvasRect(candidate, inset));
+
+    const scored = candidates
+      .map((candidate) => ({
+        candidate,
+        score: placedRects.reduce((total, existing) => total + rectOverlapRatio(candidate, existing), 0) + Math.abs(candidate.x - rect.x) * 0.006 + Math.abs(candidate.y - rect.y) * 0.006,
+      }))
+      .sort((a, b) => a.score - b.score);
+
+    if (scored[0] && scored[0].score < placedRects.reduce((total, existing) => total + rectOverlapRatio(next, existing), 0)) {
+      next = scored[0].candidate;
+    }
+  }
+
+  if (placedRects.some((placed) => rectOverlapRatio(next, placed) > 0.28) && next.w > 8) {
+    next = constrainCanvasRect({ ...next, w: Math.max(6, next.w * 0.82) }, inset);
+  }
+
+  return next;
 }
 
 function previewItemLayer(item: PreviewItem) {
@@ -1461,7 +1516,9 @@ function FreeformPreview({
       : 'min(100%, 1180px, calc((100dvh - 160px) * 1.6))';
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = [...previewCanvas.items].sort((a, b) => previewItemLayer(a) - previewItemLayer(b));
-  const readableRects: Array<ReturnType<typeof clampCanvasRect>> = [];
+  const readableRects: CanvasRect[] = [];
+  const placedRects: CanvasRect[] = [];
+  const buttonRects: CanvasRect[] = [];
 
   return (
     <div
@@ -1496,7 +1553,14 @@ function FreeformPreview({
           }}
         />
         {visibleItems.map((item, index) => {
-          const rect = clampCanvasRect(item);
+          const rawRect = clampCanvasRect(item);
+          const rect = item.kind === 'box' || item.kind === 'media'
+            ? avoidLayoutCollision(item, rawRect, placedRects)
+            : item.kind === 'button'
+              ? avoidLayoutCollision(item, rawRect, buttonRects)
+              : constrainCanvasRect(rawRect, isReadablePreviewItem(item) ? 2 : 0);
+          if (item.kind === 'box' || item.kind === 'media') placedRects.push(rect);
+          if (item.kind === 'button') buttonRects.push(rect);
           const readableItem = isReadablePreviewItem(item);
           const hasTextCollision = readableItem && readableRects.some((existingRect) => rectOverlapRatio(rect, existingRect) > 0.22);
           const itemColor = getItemColor(item, colors, display);

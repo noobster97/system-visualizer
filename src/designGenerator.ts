@@ -556,6 +556,8 @@ Rules:
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
   If the uploaded UI has overlays, represent them intentionally with enough contrast and room; do not accidentally stack unrelated labels, buttons, cards, or form fields.
+  Repeated cards, chips, buttons, image panels, and form fields must have visible gutters between them. Do not let sibling cards or chips cover each other.
+  Keep readable text inside its visual parent and at least 2% away from the canvas edge unless it is a deliberate full-bleed navigation or footer label.
   Dense repeated text from the screenshot should usually become line/divider primitives, not many readable labels.
   Give readable labels enough width and height. If an element is too small for text, use line, divider, box, or media primitives instead of a readable label.
   Preserve visual breathing room around edges, keep footer or bottom navigation visible when relevant, and avoid placing important text directly over busy media.

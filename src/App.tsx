@@ -261,7 +261,7 @@ export default function App() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [folderHandle, setFolderHandle] = useState<any | null>(null);
   const [folderName, setFolderName] = useState('');
-  const [inputMode, setInputMode] = useState<InputMode>('screenshot');
+  const [inputMode, setInputMode] = useState<InputMode>('brief');
   const [brief, setBrief] = useState<DesignBrief>(emptyBrief);
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [palettes, setPalettes] = useState<Palette[]>([]);
@@ -441,7 +441,7 @@ export default function App() {
     }
 
     if (inputMode === 'screenshot' && !uploadedImage) {
-      setError('Upload a screenshot first. This mode uses the uploaded UI as the preview layout reference.');
+      setError('Upload a screenshot for this mode, or switch to From Brief if you do not have one.');
       return;
     }
 
@@ -786,7 +786,7 @@ export default function App() {
               <section>
                 <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>Design Brief</h3>
                 <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-zinc-400' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                  Choose how AI should understand the layout. It still returns only palettes, fonts, and a preview mockup.
+                  Choose one path. Use Brief when you do not have a screenshot, or Screenshot when you want AI to follow an existing UI.
                 </div>
                 <div className={`mb-3 grid grid-cols-2 rounded-lg p-1 ${isDark ? 'bg-zinc-950 border border-zinc-800' : 'bg-slate-100 border border-slate-200'}`}>
                   <button
@@ -807,7 +807,7 @@ export default function App() {
 
                 {inputMode === 'screenshot' && (
                   <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-violet-500/20 bg-violet-500/10 text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-800'}`}>
-                    Upload is required. AI detects the layout from the screenshot; the fields below only guide palette, fonts, audience, and mood.
+                    Screenshot mode uses your upload as the layout reference. The fields below only guide palette, fonts, audience, and mood.
                   </div>
                 )}
 

@@ -590,6 +590,9 @@ Rules:
     blur: optional boolean for soft decorative/media wash only
 - previewCanvas quality rules:
   Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
+  Build a polished first-viewport preview, not a full long webpage squeezed into one frame. Include the most important visible sections and hint at lower sections with compact bands/cards/footer primitives when needed.
+  Keep the mockup composed inside the fixed canvas frame. Do not spread important regions far apart, leave large empty middle areas, or place key labels/actions at the extreme right/bottom edge.
+  Keep readable heading/text/button/label items inside a safe area: normally x >= 2, y >= 2, x + w <= 98, y + h <= 98. Use line/divider/media/box primitives for edge details, skeleton text, footer hints, and dense repeated content.
   Completeness check: previewCanvas must include the visible layout skeleton, important sections, repeated groups, primary controls, content areas, and bottom/footer areas when relevant. Do not return only palette names, fonts, and a few sample cards.
   Do a pairwise overlap check for all readable heading, text, button, and labeled box items. If two readable labels overlap or compete visually, move one, enlarge its parent region, shorten its label, reduce its textSize one step, or replace secondary detail with line/divider primitives.
   Do a final viewport-fit check at desktop width: all important text, controls, cards, and bottom sections must be visible inside the 0-100 canvas without accidental clipping, stacking, or horizontal overflow.

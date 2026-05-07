@@ -949,7 +949,7 @@ export default function App() {
       </aside>
 
       <main
-        className="flex-1 flex flex-col min-h-[760px] lg:min-h-0 lg:h-full overflow-hidden p-3 sm:p-4 lg:p-5 w-full relative transition-colors duration-500"
+        className="flex-1 flex flex-col min-h-[560px] sm:min-h-[640px] lg:min-h-0 lg:h-full overflow-hidden p-2 sm:p-4 lg:p-5 w-full relative transition-colors duration-500"
         style={{ backgroundColor: colors.bg, color: colors.text }}
       >
         <div className="absolute inset-x-0 top-[-10%] h-[400px] w-[80%] mx-auto opacity-30 blur-[120px] rounded-full pointer-events-none transition-colors duration-500" style={{ backgroundColor: colors.brand }} />
@@ -1402,7 +1402,12 @@ function FreeformPreview({
   const brandText = readableColor(calmBrand, colors.brandForeground);
   const rhythm = getPreviewRhythm(previewStyle, previewCanvas.aspect);
   const radius = rhythm.frameRadius;
-  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16] max-w-[380px]' : previewCanvas.aspect === 'square' ? 'aspect-square max-w-[640px]' : 'aspect-[16/10] max-w-5xl';
+  const aspectClass = previewCanvas.aspect === 'mobile' ? 'aspect-[9/16]' : previewCanvas.aspect === 'square' ? 'aspect-square' : 'aspect-[16/10]';
+  const canvasWidth = previewCanvas.aspect === 'mobile'
+    ? 'min(100%, 340px, calc((100dvh - 210px) * 0.5625))'
+    : previewCanvas.aspect === 'square'
+      ? 'min(100%, 600px, calc(100dvh - 210px))'
+      : 'min(100%, 960px, calc((100dvh - 210px) * 1.6))';
   const activeCategories = new Set(components.map(getComponentCategory));
   const display = { bg: displayBg, surface: displaySurface, highlight: displayHighlight, text: displayText, muted: displayMuted, border: displayBorder, brand: calmBrand, brandText };
   const visibleItems = previewCanvas.items
@@ -1427,8 +1432,10 @@ function FreeformPreview({
       }}
     >
       <div
-        className={`relative mx-auto w-full overflow-hidden ${aspectClass}`}
+        className={`relative mx-auto overflow-hidden ${aspectClass}`}
         style={{
+          width: canvasWidth,
+          minWidth: previewCanvas.aspect === 'mobile' ? 220 : 280,
           backgroundColor: displayBg,
           border: rhythm.borderWidth ? `${rhythm.borderWidth}px solid ${displayBorder}` : undefined,
           borderRadius: radius,
@@ -1486,7 +1493,7 @@ function FreeformPreview({
               <div
                 key={`${item.kind}-${index}`}
                 className="absolute flex items-center overflow-hidden break-words leading-tight"
-                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(12px, 1.55vw, 30px)' : 'clamp(8px, 0.82vw, 14px)' }}
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: item.kind === 'heading' ? 'clamp(8px, 1.2vw, 26px)' : 'clamp(6px, 0.72vw, 12px)' }}
               >
                 <span className="line-clamp-2">{item.label || (item.kind === 'heading' ? content.heroTitle : content.heroDescription)}</span>
               </div>
@@ -1499,7 +1506,7 @@ function FreeformPreview({
 
           if (item.kind === 'button') {
             return (
-              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-2 text-center text-[10px] font-bold leading-none sm:text-xs" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
+              <div key={`${item.kind}-${index}`} className="absolute grid place-items-center overflow-hidden px-1.5 text-center text-[8px] font-bold leading-none sm:text-[10px]" style={{ ...commonStyle, backgroundColor: calmBrand, color: brandText }}>
                 {rect.w >= 7 && rect.h >= 3 ? <span className="max-w-full truncate">{item.label || content.primaryAction}</span> : null}
               </div>
             );
@@ -1508,8 +1515,8 @@ function FreeformPreview({
           if (item.kind === 'media') {
             return (
               <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, background: `linear-gradient(135deg, ${mixColor(itemColor, colors.brand, 0.2)}, ${mixColor(itemColor, displayBg, 0.24)})`, border: `1px solid ${displayBorder}` }}>
-                <div className="absolute inset-x-4 bottom-4 h-2 rounded-full" style={{ backgroundColor: mixColor(displayText, displayBg, 0.55), opacity: 0.6 }} />
-                <div className="absolute bottom-8 left-4 h-2 w-1/2 rounded-full" style={{ backgroundColor: displayText, opacity: 0.22 }} />
+                <div className="absolute inset-x-2 bottom-2 h-1.5 rounded-full sm:inset-x-4 sm:bottom-4 sm:h-2" style={{ backgroundColor: mixColor(displayText, displayBg, 0.55), opacity: 0.6 }} />
+                <div className="absolute bottom-5 left-2 h-1.5 w-1/2 rounded-full sm:bottom-8 sm:left-4 sm:h-2" style={{ backgroundColor: displayText, opacity: 0.22 }} />
               </div>
             );
           }
@@ -1521,7 +1528,7 @@ function FreeformPreview({
           return (
             <div key={`${item.kind}-${index}`} className="absolute overflow-hidden" style={{ ...commonStyle, backgroundColor: itemColor, border: item.tone === 'surface' || item.tone === 'muted' ? `1px solid ${displayBorder}` : undefined }}>
               {item.label && rect.h > 4 && rect.w > 10 && (
-                <span className="absolute left-3 top-2 max-w-[85%] truncate text-[10px] font-bold" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
+                <span className="absolute left-2 top-1.5 max-w-[85%] truncate text-[8px] font-bold sm:left-3 sm:top-2 sm:text-[10px]" style={{ color: item.tone === 'brand' ? brandText : displayText }}>{item.label}</span>
               )}
             </div>
           );

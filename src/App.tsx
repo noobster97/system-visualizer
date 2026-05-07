@@ -79,7 +79,6 @@ type PreviewContent = {
 const maxSavedHistory = 20;
 const generateCooldownMs = 8000;
 const autoProjectType = 'Auto-detect from upload';
-const systemTypes = [autoProjectType, 'Website', 'Web System', 'Mobile App', 'Dashboard', 'Landing Page', 'E-commerce', 'SaaS Product', 'Portfolio'];
 const designTypes = ['Minimal', 'Corporate', 'Luxury', 'Playful', 'Editorial', 'Futuristic', 'Warm', 'Bold', 'Calm', 'High Contrast'];
 const defaultPreviewComponents: PreviewComponent[] = ['Header', 'Hero Showcase', 'Feature Cards', 'Contact Form', 'Footer'];
 const defaultPreviewStyle: PreviewStyle = {
@@ -161,13 +160,12 @@ async function readHistoryFiles(directoryHandle: any): Promise<SavedGeneration[]
 }
 
 function buildBriefPrompt(brief: DesignBrief, inputMode: InputMode, hasUploadedImage: boolean) {
-  const isAutoProjectType = brief.systemType === autoProjectType;
   const modeLabel = inputMode === 'screenshot' ? 'From Screenshot' : 'From Brief';
   return [
     `Input mode: ${modeLabel}`,
     `Uploaded screenshot provided: ${hasUploadedImage ? 'Yes' : 'No'}`,
-    `Project type: ${inputMode === 'screenshot' ? autoProjectType : brief.systemType}`,
-    `Project type rule: ${inputMode === 'screenshot' ? 'Auto-detect the interface type and layout from the uploaded image. Do not ask the user for project type in this mode.' : isAutoProjectType ? 'Auto-detect the interface type from the written brief.' : 'Use this as the main structure guide when no image is uploaded.'}`,
+    `Project type: Auto-detect`,
+    `Project type rule: ${inputMode === 'screenshot' ? 'Auto-detect the interface type and layout from the uploaded image.' : 'Auto-detect the interface type and layout from the written use case and brief.'}`,
     `Design type: ${brief.designType}`,
     `Industry/use case: ${brief.industry || 'Not specified'}`,
     `Target audience: ${brief.audience || 'Not specified'}`,
@@ -808,19 +806,6 @@ export default function App() {
                 {inputMode === 'screenshot' && (
                   <div className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${isDark ? 'border-violet-500/20 bg-violet-500/10 text-violet-100' : 'border-violet-200 bg-violet-50 text-violet-800'}`}>
                     Screenshot mode uses your upload as the layout reference. The fields below only guide palette, fonts, audience, and mood.
-                  </div>
-                )}
-
-                {inputMode === 'brief' && (
-                  <div className="mb-3">
-                    <label className={`text-[10px] font-bold uppercase tracking-widest block mb-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>Project Type</label>
-                    <select
-                      value={brief.systemType}
-                      onChange={(event) => updateBrief('systemType', event.target.value)}
-                      className={`pretty-select w-full text-xs px-3 py-2.5 rounded-lg border outline-none shadow-inner transition-all hover:-translate-y-px focus:ring-2 focus:ring-violet-500/70 ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100 hover:border-zinc-700 focus:bg-zinc-950' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-slate-300 focus:bg-white'}`}
-                    >
-                      {systemTypes.map((option) => <option key={option} value={option}>{option}</option>)}
-                    </select>
                   </div>
                 )}
 

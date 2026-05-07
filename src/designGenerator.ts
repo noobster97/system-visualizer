@@ -557,6 +557,7 @@ Rules:
     blur: optional boolean for soft decorative/media wash only
 - previewCanvas quality rules:
   Before final JSON, run an internal QA pass: check every card/chip/button/text/media item for bounds, sibling collisions, readable spacing, repeated component gutters, and whether the layout still resembles the uploaded screenshot or written brief.
+  Do a pairwise overlap check for all readable heading, text, button, and labeled box items. If two readable labels overlap or compete visually, move one, enlarge its parent region, shorten its label, reduce its textSize one step, or replace secondary detail with line/divider primitives.
   Coverage checklist for screenshot uploads: represent every major visible region of the uploaded UI, including top navigation, main title/hero, search/filter/toolbars, card/list/table/form area, side panels, footer/bottom area, and obvious repeated component groups. If the screenshot has repeated cards/chips/rows, include enough primitives to show that repetition and spacing rhythm.
   Coverage checklist for brief-only prompts: infer the expected real product screen and include the important UI areas that user would expect for that product, not only a hero and cards.
   Do not leave large accidental blank areas unless the uploaded image or requested design clearly has that whitespace. If the original has dense content, the previewCanvas should also look dense.
@@ -565,6 +566,7 @@ Rules:
   Use clear layer order: large background/surface/media areas first, divider/line details next, then headings/text/buttons/avatars on top.
   Avoid incoherent overlap. Overlap only when it represents intentional UI grouping such as text inside a card, button label, header content, or media overlay.
   If the uploaded UI has overlays, represent them intentionally with enough contrast and room; do not accidentally stack unrelated labels, buttons, cards, or form fields.
+  Keep readable labels visually inside their intended parent card/section/button. A label should not float across card borders or sit half outside the section it describes.
   Repeated cards, chips, buttons, image panels, and form fields must have visible gutters between them. Do not let sibling cards or chips cover each other.
   Keep readable text inside its visual parent and at least 2% away from the canvas edge unless it is a deliberate full-bleed navigation or footer label.
   Dense repeated text from the screenshot should usually become line/divider primitives, not many readable labels.

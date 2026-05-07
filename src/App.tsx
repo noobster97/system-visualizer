@@ -1342,8 +1342,11 @@ function getCanvasTextSize(rect: ReturnType<typeof clampCanvasRect>, kind: 'head
   } as const;
   const aspectScale = aspect === 'mobile' ? 0.86 : 1;
   const preferred = sizeMap[kind][sizeKey] * aspectScale;
-  const cramped = rect.w < (kind === 'heading' ? 10 : 7) || rect.h < (kind === 'heading' ? 4 : 2.4);
-  return cramped ? Math.max(10, preferred * 0.88) : preferred;
+  const canvasUnit = aspect === 'mobile' ? 4.6 : aspect === 'square' ? 7.2 : 7.6;
+  const fitByHeight = rect.h * canvasUnit * (kind === 'heading' ? 0.72 : kind === 'button' ? 0.82 : 0.78);
+  const fitByWidth = rect.w * canvasUnit * (kind === 'heading' ? 0.22 : kind === 'button' ? 0.28 : 0.24);
+  const fitted = Math.min(preferred, Math.max(10, fitByHeight), Math.max(10, fitByWidth));
+  return Math.max(kind === 'heading' ? 12 : 10, fitted);
 }
 
 function previewItemLayer(item: PreviewItem) {
@@ -1477,8 +1480,8 @@ function FreeformPreview({
             return (
               <div
                 key={`${item.kind}-${index}`}
-                className="absolute flex items-center overflow-hidden leading-tight"
-                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: textSize }}
+                className="absolute flex items-center overflow-hidden"
+                style={{ ...commonStyle, color: displayText, fontFamily: item.kind === 'heading' ? font : undefined, fontWeight: item.kind === 'heading' ? 800 : 600, fontSize: textSize, lineHeight: item.kind === 'heading' ? 1.05 : 1.16 }}
               >
                 <span
                   style={{
